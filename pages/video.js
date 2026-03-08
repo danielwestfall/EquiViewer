@@ -254,6 +254,54 @@ const VideoPlayer = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [synth]); // selectedVoice intentionally omitted to avoid resetting voice on every selection
 
+  // Fetch community data when a new video is loaded
+  useEffect(() => {
+    if (!videoId) return;
+
+    const fetchCommunityData = async () => {
+      try {
+        const [adsRes, diyRes, tbmaRes] = await Promise.all([
+          fetch(`/api/db/get-ads?videoId=${videoId}`),
+          fetch(`/api/db/get-diy?videoId=${videoId}`),
+          fetch(`/api/db/get-tbma?videoId=${videoId}`)
+        ]);
+
+        if (adsRes.ok) {
+          const dbAds = await adsRes.json();
+          setAds((prev) => {
+            const existingIds = new Set(prev.map((ad) => ad.id));
+            const newAds = dbAds.filter((dbAd) => !existingIds.has(dbAd.id));
+            return [...prev, ...newAds].sort((a, b) => a.time - b.time);
+          });
+        }
+
+        if (diyRes.ok) {
+          const dbDiy = await diyRes.json();
+          setDiySteps((prev) => {
+            const existingIds = new Set(prev.map((step) => step.id));
+            const newSteps = dbDiy.filter((dbS) => !existingIds.has(dbS.id));
+            return [...prev, ...newSteps].sort((a, b) => a.startTime - b.startTime);
+          });
+        }
+
+        if (tbmaRes.ok) {
+          const dbTbmaSets = await tbmaRes.json();
+          setTbmaBlocks((prev) => {
+            const flatDbBlocks = dbTbmaSets.flatMap((script) => script.blocks);
+            const existingIds = new Set(prev.map((block) => block.id));
+            const newBlocks = flatDbBlocks.filter((dbB) => !existingIds.has(dbB.id));
+            return [...prev, ...newBlocks];
+          });
+        }
+      } catch (err) {
+        console.error("Failed to fetch community data", err);
+      }
+    };
+
+    fetchCommunityData();
+  }, [videoId]);
+
+
   // Prevent accidental navigation if there are unsaved changes
   useEffect(() => {
     const handleBeforeUnload = (e) => {
