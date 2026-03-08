@@ -11,22 +11,28 @@ export default async function handler(req, res) {
 
   const { adId, voterId, direction } = req.body;
 
-  if (!adId || !voterId || ![1, -1].includes(direction)) {
-    return res.status(400).json({ error: 'adId, voterId, and direction (1 or -1) are required' });
+  if (!adId || !voterId || (direction !== 1 && direction !== -1)) {
+    return res.status(400).json({ error: 'Invalid vote data' });
+  }
+
+  let userId = null;
+  const token = req.headers.authorization?.split(' ')[1];
+  if (token) {
+    const { data: { user } } = await supabase.auth.getUser(token);
+    if (user) userId = user.id;
   }
 
   try {
-    // Upsert the vote (one per user per AD)
+    // Upsert the vote (voterId is the anonymous session id)
+    // The UNIQUE constraint is on (ad_id, voter_id)
     const { error: voteError } = await supabase
       .from('votes')
-      .upsert(
-        {
-          ad_id: adId,
-          voter_id: voterId,
-          direction: direction,
-        },
-        { onConflict: 'ad_id,voter_id' }
-      );
+      .upsert({
+        ad_id: adId,
+        voter_id: voterId,
+        direction: direction,
+        ...(userId && { user_id: userId }),
+      }, { onConflict: 'ad_id, voter_id' });
 
     if (voteError) throw voteError;
 

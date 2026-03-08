@@ -15,6 +15,13 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing video or blocks data' });
   }
 
+  let userId = null;
+  const token = req.headers.authorization?.split(' ')[1];
+  if (token) {
+    const { data: { user } } = await supabase.auth.getUser(token);
+    if (user) userId = user.id;
+  }
+
   try {
     // Upsert video record
     const { error: videoError } = await supabase
@@ -30,18 +37,19 @@ export default async function handler(req, res) {
     // Generate a set_id to group this TBMA script
     const setId = crypto.randomUUID();
 
-    // Insert TBMA blocks
+    // Insert all blocks for this set
     const rows = blocks.map((block, index) => ({
       video_id: video.id,
       set_id: setId,
-      block_type: block.type || 'dialog',
+      block_type: block.type, // 'dialog' or 'action'
       time: block.time,
-      text: block.text || '',
+      text: block.text,
       voice: block.voice || null,
       rate: block.rate || 1.0,
       mode: block.mode || 'pause',
       sort_order: index,
       author_id: authorId || 'anonymous',
+      ...(userId && { user_id: userId }),
     }));
 
     const { data, error: blocksError } = await supabase

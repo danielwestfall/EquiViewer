@@ -84,9 +84,17 @@ const TbmaEditor = ({
     setImportError("");
     try {
       const res = await fetch(`/api/captions?videoId=${videoId}`);
-      const data = await res.json();
+      
+      let data;
+      const contentType = res.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        data = await res.json();
+      } else {
+        const text = await res.text();
+        throw new Error(`Server returned a non-JSON error (Status ${res.status}): ${text.substring(0, 50)}...`);
+      }
 
-      if (!res.ok) throw new Error(data.error || "Failed to fetch");
+      if (!res.ok) throw new Error(data.error || "Failed to fetch captions");
 
       if (data.transcript && data.transcript.length > 0) {
         const newBlocks = data.transcript.map((t) => ({

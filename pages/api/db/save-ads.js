@@ -15,6 +15,13 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing video or ads data' });
   }
 
+  let userId = null;
+  const token = req.headers.authorization?.split(' ')[1];
+  if (token) {
+    const { data: { user } } = await supabase.auth.getUser(token);
+    if (user) userId = user.id;
+  }
+
   try {
     // Upsert the video record
     const { error: videoError } = await supabase
@@ -35,8 +42,9 @@ export default async function handler(req, res) {
       mode: ad.mode || 'pause',
       voice: ad.voice || null,
       rate: ad.rate || 1.0,
-      votes: 0,
+      votes: ad.votes || 0,
       author_id: authorId || 'anonymous',
+      ...(userId && { user_id: userId }),
     }));
 
     const { data, error: adsError } = await supabase

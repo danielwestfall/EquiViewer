@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS audio_descriptions (
   rate REAL DEFAULT 1.0,
   votes INTEGER NOT NULL DEFAULT 0,
   author_id TEXT NOT NULL,            -- anonymous session UUID
+  user_id UUID REFERENCES auth.users(id), -- Authenticated user ID (if logged in)
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -37,6 +38,7 @@ CREATE TABLE IF NOT EXISTS diy_steps (
   voice TEXT,
   rate REAL DEFAULT 1.0,
   author_id TEXT NOT NULL,
+  user_id UUID REFERENCES auth.users(id),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -53,6 +55,7 @@ CREATE TABLE IF NOT EXISTS tbma_blocks (
   mode TEXT DEFAULT 'pause',
   sort_order INTEGER NOT NULL DEFAULT 0,
   author_id TEXT NOT NULL,
+  user_id UUID REFERENCES auth.users(id),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -62,6 +65,7 @@ CREATE TABLE IF NOT EXISTS votes (
   ad_id UUID NOT NULL REFERENCES audio_descriptions(id) ON DELETE CASCADE,
   voter_id TEXT NOT NULL,
   direction SMALLINT NOT NULL CHECK (direction IN (-1, 1)),
+  user_id UUID REFERENCES auth.users(id),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE(ad_id, voter_id)
 );

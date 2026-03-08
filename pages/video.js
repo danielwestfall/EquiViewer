@@ -17,12 +17,16 @@ import {
   Snackbar,
   ToggleButton,
   ToggleButtonGroup,
+  Box,
 } from "@mui/material";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import SaveIcon from "@mui/icons-material/Save";
 import StorageIcon from "@mui/icons-material/Storage";
 import SearchIcon from "@mui/icons-material/Search";
+import PersonIcon from "@mui/icons-material/Person";
+import LogoutIcon from "@mui/icons-material/Logout";
 import SearchDialog from "../components/SearchDialog";
+import LoginDialog from "../components/LoginDialog";
 import AdTimeline from "../components/AdTimeline";
 import DiyTimeline from "../components/DiyTimeline";
 import TbmaEditor from "../components/TbmaEditor";
@@ -40,6 +44,10 @@ const VideoPlayer = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+
+  // Auth State
+  const [user, setUser] = useState(null);
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
 
   // App Mode
   const [appMode, setAppMode] = useState("ad_editor"); // 'ad_editor', 'diy_editor', 'player'
@@ -301,6 +309,22 @@ const VideoPlayer = () => {
     fetchCommunityData();
   }, [videoId]);
 
+  // Handle Auth State
+  useEffect(() => {
+    // Get initial session
+    supabase?.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user || null);
+    });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase?.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+    }) || { data: { subscription: { unsubscribe: () => {} } } };
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   // Prevent accidental navigation if there are unsaved changes
   useEffect(() => {
@@ -533,7 +557,7 @@ const VideoPlayer = () => {
       return;
     }
 
-    const sessionId = getSessionId();
+    const sessionId = user?.id || getSessionId();
     const video = {
       id: videoId,
       title: videoMetadata.title || '',
@@ -542,6 +566,11 @@ const VideoPlayer = () => {
 
     try {
       const promises = [];
+      const sessionData = await supabase?.auth.getSession();
+      const token = sessionData?.data?.session?.access_token;
+      
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
 
       // Save ADs for this video
       const currentVideoAds = ads.filter((ad) => ad.videoId === videoId);
@@ -549,7 +578,7 @@ const VideoPlayer = () => {
         promises.push(
           fetch('/api/db/save-ads', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers,
             body: JSON.stringify({ video, ads: currentVideoAds, authorId: sessionId }),
           })
         );
@@ -561,7 +590,7 @@ const VideoPlayer = () => {
         promises.push(
           fetch('/api/db/save-diy', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers,
             body: JSON.stringify({ video, steps: currentDiySteps, authorId: sessionId }),
           })
         );
@@ -572,7 +601,7 @@ const VideoPlayer = () => {
         promises.push(
           fetch('/api/db/save-tbma', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers,
             body: JSON.stringify({ video, blocks: tbmaBlocks, authorId: sessionId }),
           })
         );
@@ -773,10 +802,16 @@ const VideoPlayer = () => {
 
     // Persist vote to database (fire-and-forget with error handling)
     try {
-      const sessionId = getSessionId();
+      const sessionId = user?.id || getSessionId();
+      const sessionData = await supabase?.auth.getSession();
+      const token = sessionData?.data?.session?.access_token;
+      
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
       const res = await fetch('/api/db/vote', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           adId: id,
           voterId: sessionId,
@@ -828,9 +863,29 @@ const VideoPlayer = () => {
           content="Author, share, and playback audio descriptions for YouTube videos. Includes DIY looping, TBMA scripting, and voice control."
         />
       </Head>
-      <Typography variant="h4" gutterBottom>
-        Audio Description Player
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h4">
+          Audio Description Player
+        </Typography>
+        
+        {user ? (
+          <Button 
+            variant="outlined" 
+            startIcon={<LogoutIcon />}
+            onClick={() => supabase.auth.signOut()}
+          >
+            Sign Out
+          </Button>
+        ) : (
+          <Button 
+            variant="contained" 
+            startIcon={<PersonIcon />}
+            onClick={() => setIsLoginOpen(true)}
+          >
+            Sign In
+          </Button>
+        )}
+      </Box>
 
       <Paper
         style={{
@@ -1331,6 +1386,9 @@ const VideoPlayer = () => {
         onSearch={handleSearch}
         onSelectResult={handleSelectSearchResult}
       />
+
+      {/* Login Dialog */}
+      <LoginDialog open={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
     </div>
   );
 };
