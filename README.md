@@ -65,8 +65,8 @@ Requires Node.js 18+.
 npm install
 ```
 
-### 3. Configure Supabase (Database)
-PhaseThru uses Supabase for storing community data.
+### 3. Configure Supabase (Database & Auth)
+PhaseThru uses Supabase for storing community data and managing user profiles.
 1. Copy the example environment file:
    ```bash
    cp .env.local.example .env.local
@@ -74,13 +74,18 @@ PhaseThru uses Supabase for storing community data.
 2. Create a free project at [Supabase](https://supabase.com/).
 3. Run the SQL schema found in `supabase/migration.sql` in your Supabase SQL Editor.
 4. Add your **Project URL** and **anon public key** to `.env.local`.
+5. **Set Up Authentication:**
+   - In Supabase, go to **Authentication** -> **Providers** -> **Email**.
+   - Ensure **"Enable Email provider"** is toggled ON to allow Magic Links.
+   - Go to **Authentication** -> **URL Configuration**.
+   - Under **Redirect URLs**, add `http://localhost:3000/*` (or your specific local port) and your production Vercel URL.
 
 ### 4. Start the Development Server
 ```bash
 npm run dev
 ```
 
-Navigate to `http://localhost:3000` — you will be redirected automatically to `/video`.
+Navigate to `http://localhost:3000` (or `3001` if requested) — you will be redirected automatically to `/video`.
 
 ---
 
@@ -111,6 +116,7 @@ components/
   DiyTimeline.js    — Renders the map of DIY loop steps
   SearchDialog.js   — YouTube search dialog UI
   TbmaEditor.js     — TBMA script editor (captions + action blocks)
+  LoginDialog.js    — Email Magic Link login Modal
 lib/
   supabase.js       — Supabase singleton client and anonymous session tracking
 supabase/
