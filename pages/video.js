@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Head from "next/head";
+import { useRouter } from "next/router";
 import YouTube from "react-youtube";
 import { supabase, getSessionId } from "../lib/supabase";
 import {
@@ -18,6 +19,10 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   Box,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import SaveIcon from "@mui/icons-material/Save";
@@ -25,6 +30,8 @@ import StorageIcon from "@mui/icons-material/Storage";
 import SearchIcon from "@mui/icons-material/Search";
 import PersonIcon from "@mui/icons-material/Person";
 import LogoutIcon from "@mui/icons-material/Logout";
+import CodeIcon from "@mui/icons-material/Code";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import SearchDialog from "../components/SearchDialog";
 import LoginDialog from "../components/LoginDialog";
 import AdTimeline from "../components/AdTimeline";
@@ -34,6 +41,10 @@ import TbmaEditor from "../components/TbmaEditor";
 const DEFAULT_VIDEO_ID = "mTz0GXj8NN0";
 
 const VideoPlayer = () => {
+  const router = useRouter();
+  const isEmbedded = router.isReady ? router.query.embed === "true" : false;
+  const [embedDialogOpen, setEmbedDialogOpen] = useState(false);
+
   // Video Selection State
   const [videoId, setVideoId] = useState(DEFAULT_VIDEO_ID);
   const [videoInput, setVideoInput] = useState("");
@@ -112,6 +123,13 @@ const VideoPlayer = () => {
   useEffect(() => {
     tbmaBlocksRef.current = tbmaBlocks;
   }, [tbmaBlocks]);
+
+  // Force player mode if embedded
+  useEffect(() => {
+    if (isEmbedded && appMode !== "player") {
+      setAppMode("player");
+    }
+  }, [isEmbedded, appMode]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -884,8 +902,19 @@ const VideoPlayer = () => {
   // Filter ADs strictly for the currently loaded video
   const currentVideoAds = ads.filter((ad) => ad.videoId === videoId);
 
+  const embedCode = `<iframe src="https://phasethru.vercel.app/video?videoId=${videoId}&embed=true" width="100%" height="600" frameborder="0" allow="autoplay; encrypted-media; clipboard-write; speech" allowfullscreen></iframe>`;
+
   return (
-    <div style={{ padding: "20px", maxWidth: "1200px", margin: "0 auto" }}>
+    <div
+      style={{
+        padding: isEmbedded ? "0px" : "20px",
+        maxWidth: isEmbedded ? "100%" : "1200px",
+        margin: "0 auto",
+        height: isEmbedded ? "100vh" : "auto",
+        display: isEmbedded ? "flex" : "block",
+        flexDirection: isEmbedded ? "column" : "unset",
+      }}
+    >
       <Head>
         <title>PhaseThru — Audio Description Player</title>
         <meta
@@ -893,111 +922,136 @@ const VideoPlayer = () => {
           content="Author, share, and playback audio descriptions for YouTube videos. Includes DIY looping, TBMA scripting, and voice control."
         />
       </Head>
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          mb: 2,
-        }}
-      >
-        <Typography variant="h4">Audio Description Player</Typography>
 
-        {user ? (
-          <Button
-            variant="outlined"
-            startIcon={<LogoutIcon />}
-            onClick={() => supabase.auth.signOut()}
-          >
-            Sign Out
-          </Button>
-        ) : (
-          <Button
-            variant="contained"
-            startIcon={<PersonIcon />}
-            onClick={() => setIsLoginOpen(true)}
-          >
-            Sign In
-          </Button>
-        )}
-      </Box>
-
-      <Paper
-        style={{
-          padding: "15px",
-          marginBottom: "25px",
-          display: "flex",
-          flexDirection: "column",
-          gap: "15px",
-        }}
-      >
-        <div
-          style={{
+      {!isEmbedded && (
+        <Box
+          sx={{
             display: "flex",
-            justifyContent: "center",
-            marginBottom: "10px",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 2,
           }}
         >
-          <ToggleButtonGroup
-            color="primary"
-            value={appMode}
-            exclusive
-            onChange={(e, newMode) => {
-              if (newMode !== null) setAppMode(newMode);
-            }}
-            aria-label="Application Mode Selection"
-          >
-            <ToggleButton value="ad_editor">AD Editor</ToggleButton>
-            <ToggleButton value="diy_editor">DIY Mode Map</ToggleButton>
-            <ToggleButton value="tbma_editor">TBMA Editor</ToggleButton>
-            <ToggleButton value="player">Player</ToggleButton>
-          </ToggleButtonGroup>
-        </div>
+          <Typography variant="h4">Audio Description Player</Typography>
 
-        <div style={{ display: "flex", alignItems: "center" }}>
-          <Typography
-            variant="h6"
-            style={{ marginRight: "15px", minWidth: "150px" }}
+          {user ? (
+            <Button
+              variant="outlined"
+              startIcon={<LogoutIcon />}
+              onClick={() => supabase.auth.signOut()}
+            >
+              Sign Out
+            </Button>
+          ) : (
+            <Button
+              variant="contained"
+              startIcon={<PersonIcon />}
+              onClick={() => setIsLoginOpen(true)}
+            >
+              Sign In
+            </Button>
+          )}
+        </Box>
+      )}
+
+      {!isEmbedded && (
+        <Paper
+          style={{
+            padding: "15px",
+            marginBottom: "25px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "15px",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              marginBottom: "10px",
+            }}
           >
-            Load Video:
-          </Typography>
-          <TextField
-            placeholder="Paste YouTube URL or Video ID..."
-            variant="outlined"
-            size="small"
-            fullWidth
-            value={videoInput}
-            onChange={(e) => setVideoInput(e.target.value)}
-            style={{ marginRight: "15px" }}
-            inputProps={{ "aria-label": "YouTube URL or Video ID" }}
-          />
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleLoadVideo}
-            style={{ marginRight: "10px" }}
-          >
-            Load
-          </Button>
-          <Button
-            variant="outlined"
-            color="primary"
-            startIcon={<SearchIcon />}
-            onClick={() => setSearchOpen(true)}
-          >
-            Search
-          </Button>
-        </div>
-      </Paper>
+            <ToggleButtonGroup
+              color="primary"
+              value={appMode}
+              exclusive
+              onChange={(e, newMode) => {
+                if (newMode !== null) setAppMode(newMode);
+              }}
+              aria-label="Application Mode Selection"
+            >
+              <ToggleButton value="ad_editor">AD Editor</ToggleButton>
+              <ToggleButton value="diy_editor">DIY Mode Map</ToggleButton>
+              <ToggleButton value="tbma_editor">TBMA Editor</ToggleButton>
+              <ToggleButton value="player">Player</ToggleButton>
+            </ToggleButtonGroup>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center" }}>
+            <Typography
+              variant="h6"
+              style={{ marginRight: "15px", minWidth: "150px" }}
+            >
+              Load Video:
+            </Typography>
+            <TextField
+              placeholder="Paste YouTube URL or Video ID..."
+              variant="outlined"
+              size="small"
+              fullWidth
+              value={videoInput}
+              onChange={(e) => setVideoInput(e.target.value)}
+              style={{ marginRight: "15px" }}
+              inputProps={{ "aria-label": "YouTube URL or Video ID" }}
+            />
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleLoadVideo}
+              style={{ marginRight: "10px" }}
+            >
+              Load
+            </Button>
+            <Button
+              variant="outlined"
+              color="primary"
+              startIcon={<SearchIcon />}
+              onClick={() => setSearchOpen(true)}
+              style={{ marginRight: "10px" }}
+            >
+              Search
+            </Button>
+            <Button
+              variant="outlined"
+              color="secondary"
+              startIcon={<CodeIcon />}
+              onClick={() => setEmbedDialogOpen(true)}
+            >
+              Embed
+            </Button>
+          </div>
+        </Paper>
+      )}
 
       <Grid container spacing={4}>
         {/* Video Column */}
-        <Grid item xs={12} md={appMode === "player" ? 12 : 7}>
+        <Grid
+          item
+          xs={12}
+          md={appMode === "player" ? 12 : 7}
+          style={{ height: isEmbedded ? "100%" : "auto" }}
+        >
           <div
             style={{
               position: "relative",
-              paddingTop: appMode === "player" ? "45%" : "56.25%",
+              paddingTop: isEmbedded
+                ? "0"
+                : appMode === "player"
+                  ? "45%"
+                  : "56.25%",
+              height: isEmbedded ? "100%" : "auto",
               width: "100%",
+              flexGrow: 1,
               backgroundColor: "#000",
               marginBottom: "15px",
             }}
@@ -1399,6 +1453,7 @@ const VideoPlayer = () => {
           setHasUnsavedChanges={setHasUnsavedChanges}
           formatTime={formatTime}
           onPlayAd={playAd}
+          videoTitle={videoMetadata?.title || videoTitle}
         />
       )}
 
@@ -1424,6 +1479,54 @@ const VideoPlayer = () => {
 
       {/* Login Dialog */}
       <LoginDialog open={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
+
+      {/* Embed Code Dialog */}
+      <Dialog
+        open={embedDialogOpen}
+        onClose={() => setEmbedDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>Embed PhaseThru Player</DialogTitle>
+        <DialogContent>
+          <Typography
+            variant="body1"
+            gutterBottom
+            style={{ marginTop: "10px" }}
+          >
+            Copy the HTML code below to embed this accessible audio description
+            player on your own website.
+          </Typography>
+          <Paper
+            variant="outlined"
+            style={{
+              padding: "15px",
+              backgroundColor: "#2d2d2d",
+              color: "#fff",
+              fontFamily: "monospace",
+              wordBreak: "break-all",
+              marginTop: "10px",
+            }}
+          >
+            {embedCode}
+          </Paper>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEmbedDialogOpen(false)}>Close</Button>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<ContentCopyIcon />}
+            onClick={() => {
+              navigator.clipboard.writeText(embedCode);
+              setToastMessage("Embed code copied to clipboard!");
+              setEmbedDialogOpen(false);
+            }}
+          >
+            Copy Code
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };

@@ -16,6 +16,8 @@ import {
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
+import DownloadIcon from "@mui/icons-material/Download";
+import PrintIcon from "@mui/icons-material/Print";
 
 const TbmaEditor = ({
   videoId,
@@ -26,6 +28,7 @@ const TbmaEditor = ({
   setHasUnsavedChanges,
   formatTime,
   onPlayAd,
+  videoTitle,
 }) => {
   const [isFetching, setIsFetching] = useState(false);
   const [manualPaste, setManualPaste] = useState("");
@@ -160,6 +163,102 @@ const TbmaEditor = ({
     setHasUnsavedChanges(true);
   };
 
+  const generateTextTbma = () => {
+    let content = `PhaseThru TBMA Script\nTitle: ${videoTitle || "Unknown Video"}\n`;
+    content += `Video ID: ${videoId}\n`;
+    content += `Exported: ${new Date().toLocaleString()}\n\n`;
+    content += `=================================================\n\n`;
+
+    tbmaBlocks.forEach((block) => {
+      const timeStr = formatTime(block.time);
+      if (block.type === "action") {
+        content += `[${timeStr}] ACTION [${block.voice}]: ${block.text}\n\n`;
+      } else {
+        content += `[${timeStr}] DIALOG: ${block.text}\n\n`;
+      }
+    });
+
+    return content;
+  };
+
+  const handleDownloadTxt = () => {
+    const textContent = generateTextTbma();
+    const blob = new Blob([textContent], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `TBMA_${videoTitle || "Script"}.txt`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handlePrintTbma = () => {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      alert("Please allow pop-ups to print the script.");
+      return;
+    }
+
+    let htmlContent = `
+      <html>
+        <head>
+          <title>TBMA Script - ${videoTitle}</title>
+          <style>
+            body { font-family: sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; }
+            h1 { font-size: 24px; border-bottom: 2px solid #ccc; padding-bottom: 10px; }
+            .meta { color: #666; font-size: 14px; margin-bottom: 30px; }
+            .block { margin-bottom: 15px; }
+            .time { font-weight: bold; font-family: monospace; display: inline-block; width: 80px; }
+            .action { color: #d81b60; }
+            .dialog { color: #1976d2; }
+            .action-label, .dialog-label { font-size: 12px; font-weight: bold; background: #eee; padding: 2px 6px; border-radius: 4px; margin-right: 10px; }
+            .action-label { background: #fce4ec; color: #c2185b; }
+            .dialog-label { background: #e3f2fd; color: #1565c0; }
+            @media print {
+              body { font-size: 12pt; }
+              .block { page-break-inside: avoid; }
+            }
+          </style>
+        </head>
+        <body>
+          <h1>PhaseThru TBMA Script</h1>
+          <div class="meta">
+            <strong>Video Title:</strong> ${videoTitle || "Unknown Video"}<br/>
+            <strong>Video ID:</strong> ${videoId}<br/>
+          </div>
+    `;
+
+    tbmaBlocks.forEach((block) => {
+      const timeStr = formatTime(block.time);
+      if (block.type === "action") {
+        htmlContent += `
+          <div class="block action">
+            <span class="time">[${timeStr}]</span>
+            <span class="action-label">ACTION</span>
+            <span class="text"><strong>[${block.voice}]:</strong> ${block.text}</span>
+          </div>`;
+      } else {
+        htmlContent += `
+          <div class="block dialog">
+            <span class="time">[${timeStr}]</span>
+            <span class="dialog-label">DIALOG</span>
+            <span class="text">"${block.text}"</span>
+          </div>`;
+      }
+    });
+
+    htmlContent += `
+        </body>
+        <script>
+          window.onload = function() { window.print(); }
+        </script>
+      </html>
+    `;
+
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+  };
+
   return (
     <div style={{ marginTop: "20px" }}>
       <Typography variant="h5" gutterBottom>
@@ -241,17 +340,40 @@ const TbmaEditor = ({
               marginBottom: "15px",
             }}
           >
-            <Typography variant="h6">Script Timeline</Typography>
-            <Button
-              color="secondary"
-              size="small"
-              onClick={() => {
-                setTbmaBlocks([]);
-                setHasUnsavedChanges(true);
-              }}
-            >
-              Clear All
-            </Button>
+            <Typography variant="h6" style={{ flexGrow: 1 }}>
+              Script Timeline
+            </Typography>
+            <div style={{ display: "flex", gap: "10px" }}>
+              <Button
+                variant="outlined"
+                color="primary"
+                size="small"
+                startIcon={<DownloadIcon />}
+                onClick={handleDownloadTxt}
+              >
+                Download (.txt)
+              </Button>
+              <Button
+                variant="outlined"
+                color="primary"
+                size="small"
+                startIcon={<PrintIcon />}
+                onClick={handlePrintTbma}
+              >
+                Print / Save PDF
+              </Button>
+              <Button
+                color="secondary"
+                size="small"
+                variant="text"
+                onClick={() => {
+                  setTbmaBlocks([]);
+                  setHasUnsavedChanges(true);
+                }}
+              >
+                Clear All
+              </Button>
+            </div>
           </div>
 
           {tbmaBlocks.map((block, index) => (
