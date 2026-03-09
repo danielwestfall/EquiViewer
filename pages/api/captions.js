@@ -1,21 +1,33 @@
-import { YoutubeTranscript } from '@playzone/youtube-transcript';
+import { YouTubeTranscriptApi } from "@playzone/youtube-transcript";
 
 export default async function handler(req, res) {
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method !== "GET") {
+    return res.status(405).json({ error: "Method not allowed" });
   }
 
   const { videoId } = req.query;
-  
+
   if (!videoId) {
-    return res.status(400).json({ error: 'Video ID is required' });
+    return res.status(400).json({ error: "Video ID is required" });
   }
 
   try {
-    const transcript = await YoutubeTranscript.fetchTranscript(videoId);
-    res.status(200).json({ transcript });
+    const api = new YouTubeTranscriptApi();
+    const transcript = await api.fetch(videoId);
+
+    // Normalize to a simple { text, offset, duration } array for the frontend
+    const snippets = transcript.snippets.map((s) => ({
+      text: s.text,
+      offset: s.start * 1000, // convert seconds → milliseconds (frontend expects ms)
+      duration: s.duration * 1000,
+    }));
+
+    res.status(200).json({ transcript: snippets });
   } catch (error) {
-    console.error('YouTube transcript fetch error:', error);
-    res.status(500).json({ error: 'Failed to fetch transcript automatically. YouTube may have blocked this IP. Please use the manual CC import fallback.' });
+    console.error("YouTube transcript fetch error:", error?.message || error);
+    res.status(500).json({
+      error:
+        "Failed to fetch transcript automatically. YouTube may have blocked this request. Please use the manual CC import fallback.",
+    });
   }
 }
