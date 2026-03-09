@@ -107,6 +107,8 @@ const VideoPlayer = () => {
   // Voice Command & Caption State
   const [isListening, setIsListening] = useState(false);
   const [activeCaption, setActiveCaption] = useState("");
+  const [closedCaption, setClosedCaption] = useState("");
+  const closedCaptionRef = useRef("");
   const recognitionRef = useRef(null);
   const manualLoopBreakRef = useRef(null);
 
@@ -432,6 +434,33 @@ const VideoPlayer = () => {
 
         if (adToPlay && !synth.speaking) {
           playAd(adToPlay);
+        }
+
+        // Custom TBMA Closed Caption Logic (Player Mode only)
+        let activeDialogText = "";
+        if (currentAppMode === "player" && currentTbmaBlocks.length > 0) {
+          const dialogBlocks = currentTbmaBlocks.filter(
+            (b) => b.type === "dialog",
+          );
+          for (let i = 0; i < dialogBlocks.length; i++) {
+            const block = dialogBlocks[i];
+            const nextBlock = dialogBlocks[i + 1];
+
+            if (time >= block.time) {
+              // Hide caption if it's past the next block's start time OR if 7 seconds have elapsed (prevent stuck captions)
+              if (
+                (!nextBlock || time < nextBlock.time) &&
+                time < block.time + 7
+              ) {
+                activeDialogText = block.text;
+              }
+            }
+          }
+        }
+
+        if (closedCaptionRef.current !== activeDialogText) {
+          closedCaptionRef.current = activeDialogText;
+          setClosedCaption(activeDialogText);
         }
       }, 100); // Poll every 100ms for tighter accuracy
     } else {
@@ -1065,31 +1094,67 @@ const VideoPlayer = () => {
               opts={{ playerVars: { controls: 1 } }}
               className="youtube-container"
             />
+
+            {/* Custom Closed Captions Overlay */}
+            {appMode === "player" && (closedCaption || activeCaption) && (
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: "10%",
+                  width: "100%",
+                  textAlign: "center",
+                  pointerEvents: "none",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: "5px",
+                  zIndex: 10,
+                }}
+              >
+                {/* Audio Description Caption (if active) */}
+                {activeCaption && (
+                  <span
+                    style={{
+                      backgroundColor: "rgba(0,0,0,0.75)",
+                      color: "#ff80ab", // Pink/magenta to heavily distinguish ADs from standard dialog
+                      padding: "4px 8px",
+                      borderRadius: "4px",
+                      fontSize: "1.2rem",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    [AD]: {activeCaption}
+                  </span>
+                )}
+
+                {/* Standard TBMA Dialog Caption */}
+                {closedCaption && (
+                  <span
+                    style={{
+                      backgroundColor: "rgba(0,0,0,0.75)",
+                      color: "#fff",
+                      padding: "4px 8px",
+                      borderRadius: "4px",
+                      fontSize: "1.2rem",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {closedCaption}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
 
-          {/* PLAYER MODE OVERLAY / CAPTIONS */}
+          {/* PLAYER MODE OVERLAY / SYSTEM STATUS */}
           {appMode === "player" && (
             <div
               style={{
                 textAlign: "center",
-                marginTop: "20px",
-                minHeight: "80px",
+                marginTop: "10px",
+                minHeight: "40px",
               }}
             >
-              {activeCaption && (
-                <Paper
-                  style={{
-                    display: "inline-block",
-                    backgroundColor: "rgba(0,0,0,0.8)",
-                    padding: "15px 30px",
-                    borderRadius: "8px",
-                  }}
-                >
-                  <Typography variant="h5" style={{ color: "#fff" }}>
-                    {activeCaption}
-                  </Typography>
-                </Paper>
-              )}
               <div style={{ marginTop: "10px" }}>
                 <Typography
                   variant="caption"
