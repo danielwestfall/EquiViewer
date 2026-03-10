@@ -45,7 +45,7 @@ const COOKING_VIDEO_IDS = [
   "8a3Omai9HZ8", // Jamie Oliver Roast Potatoes
   "UI1M90vA2N4", // Binging with Babish
   "smIOeJRexWI", // Gordon Ramsay Beef Wellington
-  "FeWVA2tpup4", // Tasty recipes
+  "WzEHoCRwvw0", // Jamie Oliver 15 Min Meals
 ];
 
 const VideoPlayer = () => {
@@ -790,15 +790,22 @@ const VideoPlayer = () => {
   };
 
   const onError = (event) => {
-    // Error 150/101 means "Playback on other websites has been disabled by the video owner."
-    if (event.data === 150 || event.data === 101) {
+    // 100: Video not found/private, 101/150: Embed disabled by owner
+    if (event.data === 100 || event.data === 150 || event.data === 101) {
       setToastMessage(
-        "The video owner has disabled embedding for this video. Searching for alternatives...",
+        "This video is private or the owner disabled embedding. Opening search for alternatives...",
       );
-      if (videoMetadata?.title || videoInput) {
-        setSearchQuery(videoMetadata?.title || videoInput);
-        setSearchOpen(true);
-        setTimeout(() => handleSearch(), 500); // Auto-trigger search
+
+      let searchSuggestion = videoMetadata?.title || videoInput;
+      if (searchSuggestion && !searchSuggestion.includes("youtube.com")) {
+        setSearchQuery(searchSuggestion);
+      } else {
+        setSearchQuery(""); // Fallback if no title is known
+      }
+
+      setSearchOpen(true);
+      if (searchSuggestion && !searchSuggestion.includes("youtube.com")) {
+        setTimeout(() => handleSearch(), 500); // Auto-trigger search if we have a title
       }
     }
   };

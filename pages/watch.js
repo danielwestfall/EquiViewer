@@ -21,14 +21,16 @@ const COOKING_VIDEO_IDS = [
   "8a3Omai9HZ8", // Jamie Oliver Roast Potatoes
   "UI1M90vA2N4", // Binging with Babish
   "smIOeJRexWI", // Gordon Ramsay Beef Wellington
-  "FeWVA2tpup4", // Tasty recipes
+  "WzEHoCRwvw0", // Jamie Oliver 15 Min Meals
 ];
 
 const WatchPlayer = () => {
   const router = useRouter();
   const [videoId, setVideoId] = useState("");
+  const [videoError, setVideoError] = useState("");
 
   useEffect(() => {
+    setVideoError("");
     if (router.isReady) {
       if (router.query.v) {
         setVideoId(router.query.v);
@@ -174,15 +176,29 @@ const WatchPlayer = () => {
           .select("*")
           .eq("video_id", videoId)
           .order("time", { ascending: true });
-        if (!tbmaError && tbmaData) setTbmaBlocks(tbmaData);
-      } catch (err) {
-        console.error("Error fetching data:", err);
+        if (!tbmaError && tbmaData) {
+          setTbmaBlocks(tbmaData);
+        } else {
+          setTbmaBlocks([]);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
     fetchAllData();
   }, [videoId]);
+
+  const onError = (event) => {
+    // 100: Video not found/private, 101/150: Embed disabled by owner
+    if (event.data === 100 || event.data === 150 || event.data === 101) {
+      setVideoError(
+        "This video is private or the owner disabled embedding. Please search for an alternative.",
+      );
+    }
+  };
 
   const playAd = useCallback(
     (ad) => {
@@ -391,14 +407,54 @@ const WatchPlayer = () => {
                 marginBottom: "15px",
               }}
             >
-              <YouTube
-                key={videoId}
-                videoId={videoId}
-                onReady={onReady}
-                onStateChange={onStateChange}
-                opts={{ playerVars: { controls: 1 } }}
-                className="youtube-container"
-              />
+              {videoError ? (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    height: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#fff",
+                    padding: "20px",
+                    textAlign: "center",
+                  }}
+                >
+                  <Typography variant="h6" color="error" gutterBottom>
+                    Video Unavailable
+                  </Typography>
+                  <Typography>{videoError}</Typography>
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    sx={{ mt: 3 }}
+                    onClick={() => {
+                      const query = videoMetadata?.title || videoId;
+                      if (query && !query.includes("youtube.com")) {
+                        router.push(`/?search=${encodeURIComponent(query)}`);
+                      } else {
+                        router.push("/");
+                      }
+                    }}
+                  >
+                    Search Alternatives
+                  </Button>
+                </div>
+              ) : (
+                <YouTube
+                  key={videoId}
+                  videoId={videoId}
+                  onReady={onReady}
+                  onError={onError}
+                  onStateChange={onStateChange}
+                  opts={{ playerVars: { controls: 1 } }}
+                  className="youtube-container"
+                />
+              )}
 
               {/* Custom Closed Captions Overlay */}
               {(closedCaption || activeCaption) && (
