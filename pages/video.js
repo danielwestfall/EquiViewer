@@ -1072,31 +1072,34 @@ const VideoPlayer = () => {
               style={{ marginRight: "15px" }}
               inputProps={{ "aria-label": "YouTube URL or Video ID" }}
             />
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleLoadVideo}
-              style={{ marginRight: "10px" }}
-            >
-              Load
-            </Button>
-            <Button
-              variant="outlined"
-              color="primary"
-              startIcon={<SearchIcon />}
-              onClick={() => setSearchOpen(true)}
-              style={{ marginRight: "10px" }}
-            >
-              Search
-            </Button>
-            <Button
-              variant="outlined"
-              color="secondary"
-              startIcon={<CodeIcon />}
-              onClick={() => setEmbedDialogOpen(true)}
-            >
-              Embed
-            </Button>
+            <div style={{ display: "flex", flexShrink: 0 }}>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleLoadVideo}
+                style={{ marginRight: "10px", flexShrink: 0 }}
+              >
+                Load
+              </Button>
+              <Button
+                variant="outlined"
+                color="primary"
+                startIcon={<SearchIcon />}
+                onClick={() => setSearchOpen(true)}
+                style={{ marginRight: "10px", flexShrink: 0 }}
+              >
+                Search
+              </Button>
+              <Button
+                variant="outlined"
+                color="secondary"
+                startIcon={<CodeIcon />}
+                onClick={() => setEmbedDialogOpen(true)}
+                style={{ flexShrink: 0 }}
+              >
+                Embed
+              </Button>
+            </div>
           </div>
         </Paper>
       )}
