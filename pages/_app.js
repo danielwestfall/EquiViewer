@@ -13,6 +13,9 @@ const theme = createTheme({
       main: "#c2185b", // Darkened from #e91e63 to meet 4.5:1 contrast ratio
     },
   },
+  typography: {
+    fontFamily: "'Atkinson Hyperlegible', sans-serif",
+  },
 });
 
 function MyApp({ Component, pageProps }) {
