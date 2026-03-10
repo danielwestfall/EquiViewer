@@ -351,8 +351,8 @@ const WatchPlayer = () => {
       <Head>
         <title>
           {videoMetadata?.title
-            ? `${videoMetadata.title} - PhaseThru Viewer`
-            : "PhaseThru Viewer"}
+            ? `${videoMetadata.title} - EquiViewer`
+            : "EquiViewer"}
         </title>
       </Head>
 
@@ -364,7 +364,7 @@ const WatchPlayer = () => {
           mb: 3,
         }}
       >
-        <Typography variant="h4">PhaseThru Viewer</Typography>
+        <Typography variant="h4">EquiViewer</Typography>
         <Button
           variant="contained"
           color="secondary"

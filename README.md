@@ -1,8 +1,8 @@
-# PhaseThru ✨
+# EquiViewer ✨
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fdanielwestfall%2Fphasethru)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fdanielwestfall%2Fequiviewer)
 
-> **⚖️ Licensing Notice**: PhaseThru is released under the [PolyForm Noncommercial License 1.0.0](LICENSE).
+> **⚖️ Licensing Notice**: EquiViewer is released under the [PolyForm Noncommercial License 1.0.0](LICENSE).
 > You are free to copy, modify, distribute, and use this software for **personal, educational, and non-commercial purposes**.
 > You **may not** use this software for commercial purposes (including selling it or incorporating it into a paid product) without explicit, separate written permission from the creator.
 
@@ -12,7 +12,7 @@ Built on **React 18**, **Next.js 14**, **Supabase**, and the **YouTube IFrame AP
 
 ## 🎯 Project Philosophy
 
-PhaseThru aims to bridge the gap in media accessibility and interactive learning by empowering creators and users to inject custom audio contexts into existing YouTube videos without needing complex video editing software. Whether you are generating WCAG-compliant Audio Descriptions for the visually impaired or breaking down complex DIY videos into loopable, voice-controllable segments, PhaseThru provides the tools in one unified interface.
+EquiViewer aims to bridge the gap in media accessibility and interactive learning by empowering creators and users to inject custom audio contexts into existing YouTube videos without needing complex video editing software. Whether you are generating WCAG-compliant Audio Descriptions for the visually impaired or breaking down complex DIY videos into loopable, voice-controllable segments, EquiViewer provides the tools in one unified interface.
 
 Through its **community-driven database**, users can permanently save, share, discover, and vote on accessibility layers created by others for any YouTube video.
 
@@ -20,12 +20,12 @@ Through its **community-driven database**, users can permanently save, share, di
 
 ## ✨ Core Features
 
-PhaseThru operates in several distinct Application Modes, toggleable via the main interface:
+EquiViewer operates in several distinct Application Modes, toggleable via the main interface:
 
 ### 1. 🎙️ Audio Description (AD) Editor Mode
 
 - **Author Descriptions**: Pause the video at any timestamp and author a custom string of text.
-- **Text-To-Speech Integration**: Utilizing the native Web Speech API, PhaseThru will automatically read your descriptions at the designated timestamps.
+- **Text-To-Speech Integration**: Utilizing the native Web Speech API, EquiViewer will automatically read your descriptions at the designated timestamps.
 - **Customizable Voices & Speed**: Select from diverse system voices and adjust the reading rate per AD.
 - **Playback Sync Engine**: Choose whether the video should **Pause** entirely while the TTS reads the AD, or **Duck** (lower volume) to let the audio mix in real-time.
 - **Community Voting**: Upvote or downvote ADs to surface the best community descriptions.
@@ -60,13 +60,13 @@ PhaseThru operates in several distinct Application Modes, toggleable via the mai
 
 ## 🚀 Quickstart Guide
 
-To run PhaseThru locally in your development environment:
+To run EquiViewer locally in your development environment:
 
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/danielwestfall/phasethru.git
-cd phasethru
+git clone https://github.com/danielwestfall/equiviewer.git
+cd equiviewer
 ```
 
 ### 2. Install Dependencies
@@ -79,7 +79,7 @@ npm install
 
 ### 3. Configure Supabase (Database & Auth)
 
-PhaseThru uses Supabase for storing community data and managing user profiles.
+EquiViewer uses Supabase for storing community data and managing user profiles.
 
 1. Copy the example environment file:
    ```bash

@@ -164,7 +164,7 @@ const TbmaEditor = ({
   };
 
   const generateTextTbma = () => {
-    let content = `PhaseThru TBMA Script\nTitle: ${videoTitle || "Unknown Video"}\n`;
+    let content = `EquiViewer TBMA Script\nTitle: ${videoTitle || "Unknown Video"}\n`;
     content += `Video ID: ${videoId}\n`;
     content += `Exported: ${new Date().toLocaleString()}\n\n`;
     content += `=================================================\n\n`;
@@ -221,7 +221,7 @@ const TbmaEditor = ({
           </style>
         </head>
         <body>
-          <h1>PhaseThru TBMA Script</h1>
+          <h1>EquiViewer TBMA Script</h1>
           <div class="meta">
             <strong>Video Title:</strong> ${videoTitle || "Unknown Video"}<br/>
             <strong>Video ID:</strong> ${videoId}<br/>

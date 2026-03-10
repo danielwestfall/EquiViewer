@@ -954,7 +954,7 @@ const VideoPlayer = () => {
   // Filter ADs strictly for the currently loaded video
   const currentVideoAds = ads.filter((ad) => ad.videoId === videoId);
 
-  const embedCode = `<iframe src="https://phasethru.vercel.app/video?videoId=${videoId}&embed=true" width="100%" height="600" frameborder="0" allow="autoplay; encrypted-media; clipboard-write; speech" allowfullscreen></iframe>`;
+  const embedCode = `<iframe src="https://equiviewer.vercel.app/video?videoId=${videoId}&embed=true" width="100%" height="600" frameborder="0" allow="autoplay; encrypted-media; clipboard-write; speech" allowfullscreen></iframe>`;
 
   return (
     <div
@@ -968,7 +968,7 @@ const VideoPlayer = () => {
       }}
     >
       <Head>
-        <title>PhaseThru — Audio Description Player</title>
+        <title>EquiViewer — Audio Description Player</title>
         <meta
           name="description"
           content="Author, share, and playback audio descriptions for YouTube videos. Includes DIY looping, TBMA scripting, and voice control."
@@ -1575,7 +1575,7 @@ const VideoPlayer = () => {
         maxWidth="md"
         fullWidth
       >
-        <DialogTitle>Embed PhaseThru Player</DialogTitle>
+        <DialogTitle>Embed EquiViewer Player</DialogTitle>
         <DialogContent>
           <Typography
             variant="body1"
