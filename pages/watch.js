@@ -380,7 +380,16 @@ const WatchPlayer = () => {
           mb: 3,
         }}
       >
-        <Typography variant="h4">EquiViewer</Typography>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <img
+            src="/equiviewer_logo.png"
+            alt="EquiViewer Logo"
+            style={{ height: "40px" }}
+          />
+          <Typography variant="h4" sx={{ fontWeight: "bold" }}>
+            EquiViewer
+          </Typography>
+        </Box>
         <Button
           variant="contained"
           color="secondary"

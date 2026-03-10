@@ -991,7 +991,16 @@ const VideoPlayer = () => {
             mb: 2,
           }}
         >
-          <Typography variant="h4">Audio Description Player</Typography>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <img
+              src="/equiviewer_logo.png"
+              alt="EquiViewer Logo"
+              style={{ height: "40px" }}
+            />
+            <Typography variant="h4" sx={{ fontWeight: "bold" }}>
+              EquiViewer Editor
+            </Typography>
+          </Box>
 
           {user ? (
             <Button
