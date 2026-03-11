@@ -1,6 +1,7 @@
 # EquiViewer ✨
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fdanielwestfall%2Fequiviewer)
+**[View on GitHub](https://github.com/danielwestfall/equiviewer)** | **[Launch App](https://equiviewer.app)**
 
 > **⚖️ Licensing Notice**: EquiViewer is released under the [PolyForm Noncommercial License 1.0.0](LICENSE).
 > You are free to copy, modify, distribute, and use this software for **personal, educational, and non-commercial purposes**.
