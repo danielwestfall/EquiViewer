@@ -8,14 +8,25 @@ import { useEffect } from "react";
 const theme = createTheme({
   palette: {
     primary: {
-      main: "#1976d2",
+      main: "#2337ff",
     },
     secondary: {
-      main: "#c2185b", // Darkened from #e91e63 to meet 4.5:1 contrast ratio
+      main: "#5f5f6f",
     },
+    error: {
+      main: "#ba1a1a",
+    },
+    background: {
+      default: "#fefbff",
+      paper: "#fefbff",
+    },
+    text: {
+      primary: "#1c1b1f",
+      secondary: "#46464f",
+    }
   },
   typography: {
-    fontFamily: "'Atkinson Hyperlegible', sans-serif",
+    fontFamily: "var(--font-family-primary)",
   },
 });
 
