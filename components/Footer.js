@@ -138,7 +138,7 @@ const Footer = () => {
           </svg>
         </MuiLink>
         <MuiLink
-          href="https://buymeacoffee.com/danwestfalb"
+          href="https://buymeacoffee.com/danwestfall"
           target="_blank"
           rel="noopener noreferrer"
         >

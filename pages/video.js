@@ -1058,7 +1058,7 @@ const VideoPlayer = () => {
               value={videoInput}
               onChange={(e) => setVideoInput(e.target.value)}
               style={{ marginRight: "15px" }}
-              inputProps={{ "aria-label": "YouTube URL or Video ID" }}
+              inputProps={{ "aria-label": "Paste YouTube URL or Video ID" }}
             />
             <div style={{ display: "flex", flexShrink: 0 }}>
               <Button
