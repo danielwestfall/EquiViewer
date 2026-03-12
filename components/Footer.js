@@ -23,19 +23,20 @@ const Footer = () => {
     >
       <Typography
         variant="body2"
-        color="textSecondary"
         sx={{
           mb: 1,
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
           gap: 3,
+          color: "#424242", // High contrast text
         }}
       >
         <MuiLink
           href="https://codea11y.dev/"
           target="_blank"
           rel="noopener noreferrer"
+          className="footer-link-expand"
         >
           <svg
             height="40"
@@ -124,7 +125,7 @@ const Footer = () => {
                       fontSize: "26.1897px",
                       fontFamily: "Cal Sans",
                       strokeWidth: 0.30691,
-                      fill: "#1e88e5",
+                      fill: "currentColor",
                     }}
                     x="71.983971"
                     y="163.30981"
@@ -141,6 +142,7 @@ const Footer = () => {
           href="https://buymeacoffee.com/danwestfall"
           target="_blank"
           rel="noopener noreferrer"
+          className="footer-link-expand"
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -151,12 +153,22 @@ const Footer = () => {
         </MuiLink>
       </Typography>
 
-      <Typography variant="body2" color="textSecondary">
-        <MuiLink component={Link} href="/help" sx={{ mx: 1 }}>
+      <Typography variant="body2" sx={{ color: "#424242" }}>
+        <MuiLink
+          component={Link}
+          href="/help"
+          sx={{ mx: 1, fontWeight: 500 }}
+          className="footer-link-expand"
+        >
           Help
         </MuiLink>
         |
-        <MuiLink component={Link} href="/about" sx={{ mx: 1 }}>
+        <MuiLink
+          component={Link}
+          href="/about"
+          sx={{ mx: 1, fontWeight: 500 }}
+          className="footer-link-expand"
+        >
           About
         </MuiLink>
       </Typography>

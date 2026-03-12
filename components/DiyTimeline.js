@@ -7,24 +7,24 @@ const DiyTimeline = ({ diySteps, videoId, formatTime, onDeleteDiyStep }) => {
     return (
         <div>
             <div style={{ display: 'flex', alignItems: 'center', marginTop: '10px', marginBottom: '15px' }}>
-                <Typography variant="h5" style={{ flexGrow: 1 }}>
+                <Typography variant="h5" style={{ flexGrow: 1, color: "#212121", fontWeight: 700 }}>
                      Saved DIY Steps ({videoSteps.length})
                 </Typography>
             </div>
             
             {videoSteps.length === 0 ? (
-                <Typography color="textSecondary">No DIY steps added for this video yet.</Typography>
+                <Typography sx={{ color: "#424242", fontStyle: "italic", mt: 2 }}>No DIY steps added for this video yet.</Typography>
             ) : (
                 <Grid container spacing={2}>
                     {videoSteps.map((step, index) => (
                         <Grid item xs={12} key={step.id}>
                             <Paper style={{ padding: '15px', display: 'flex', alignItems: 'center' }}>
                                 
-                                <Typography variant="subtitle1" style={{ minWidth: '130px', fontWeight: 'bold' }}>
+                                <Typography variant="subtitle1" style={{ minWidth: '130px', fontWeight: 'bold', color: "#212121" }}>
                                     {formatTime(step.startTime)} - {formatTime(step.endTime)}
                                 </Typography>
 
-                                <Typography style={{ marginLeft: '15px', flexGrow: 1 }}>
+                                <Typography style={{ marginLeft: '15px', flexGrow: 1, color: "#424242" }}>
                                     {step.text || "[No Context Text]"}
                                 </Typography>
 

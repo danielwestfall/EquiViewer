@@ -55,7 +55,7 @@ const SearchDialog = ({
                         </ListItemButton>
                     ))}
                     {searchResults.length === 0 && !isSearching && searchQuery && (
-                        <Typography color="textSecondary" align="center">No results found.</Typography>
+                        <Typography sx={{ color: "#424242" }} align="center">No results found.</Typography>
                     )}
                 </List>
             </DialogContent>
