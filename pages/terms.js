@@ -26,7 +26,7 @@ export default function Terms() {
 
         <Typography variant="h5" gutterBottom sx={{ mt: 4 }}>3. Disclaimer</Typography>
         <Typography variant="body1" paragraph>
-          PhaseThru is provided "as is" without warranty of any kind. We are not affiliated with YouTube or Google.
+          PhaseThru is provided &quot;as is&quot; without warranty of any kind. We are not affiliated with YouTube or Google.
         </Typography>
 
         <Box sx={{ mt: 6 }}>

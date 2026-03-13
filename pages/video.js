@@ -579,7 +579,7 @@ const VideoPlayer = () => {
       activeAdsQueueRef.current.add(ad.id); 
       synth.speak(utterance);
     },
-    [synth, voices, selectedVoice, speechRate, player],
+    [synth, voices, selectedVoice, speechRate, speechPitch, player],
   );
 
   const testSpeech = () => {
