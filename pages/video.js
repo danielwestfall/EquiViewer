@@ -34,6 +34,8 @@ import PersonIcon from "@mui/icons-material/Person";
 import LogoutIcon from "@mui/icons-material/Logout";
 import CodeIcon from "@mui/icons-material/Code";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
+import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import SearchDialog from "../components/SearchDialog";
 import LoginDialog from "../components/LoginDialog";
 import AdTimeline from "../components/AdTimeline";
@@ -84,6 +86,13 @@ const VideoPlayer = () => {
   const [player, setPlayer] = useState(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [ads, setAds] = useState([]);
+  const [adSets, setAdSets] = useState([]); // List of community sets for this video
+  const [selectedSetId, setSelectedSetId] = useState(null); // The ID of the currently active set
+  const [saveSetName, setSaveSetName] = useState(""); // Input for naming a new set
+  const [isSuggesting, setIsSuggesting] = useState(false); // UI toggle for suggestion mode
+  const [suggestionText, setSuggestionText] = useState("");
+  const [suggestTargetAd, setSuggestTargetAd] = useState(null); // The specific AD being commented on
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
 
   // DIY Editor State
   const [diySteps, setDiySteps] = useState([]);
@@ -674,7 +683,32 @@ const VideoPlayer = () => {
       author: video.channel,
     });
     setSearchOpen(false);
+    fetchCommunityAds(video.id); // Also fetch community sets for the new video
   };
+
+  const fetchCommunityAds = useCallback(async (vId) => {
+    const targetVideoId = vId || videoId;
+    if (!targetVideoId) return;
+
+    try {
+      const res = await fetch(`/api/db/get-ads?videoId=${targetVideoId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setAdSets(data);
+        // Default to the first (top voted) set if not already selected
+        if (data.length > 0 && !selectedSetId) {
+          // You could automatically load it, but let's just keep the state for now
+          // and let the user decide which to "Load Into Editor"
+        }
+      }
+    } catch (err) {
+      console.warn("Failed to fetch community ADs:", err);
+    }
+  }, [videoId, selectedSetId]); // Added selectedSetId to dependencies to be safe
+
+  useEffect(() => {
+    if (videoId) fetchCommunityAds();
+  }, [videoId, fetchCommunityAds]);
 
   // Save & Load Functionality
   const handleSaveLocally = () => {
@@ -717,6 +751,7 @@ const VideoPlayer = () => {
               video,
               ads: currentVideoAds,
               authorId: sessionId,
+              setName: saveSetName, // Pass the set name!
             }),
           }),
         );
@@ -1050,6 +1085,79 @@ const VideoPlayer = () => {
     }
   };
 
+  const handleVoteSet = async (setId, direction) => {
+    // Optimistic local update
+    const updatedSets = adSets.map((s) => {
+      if (s.id === setId) {
+        return {
+          ...s,
+          votes: (s.votes || 0) + (direction === "up" ? 1 : -1),
+        };
+      }
+      return s;
+    });
+    setAdSets(updatedSets);
+
+    try {
+      const sessionId = user?.id || getSessionId();
+      const sessionData = await supabase?.auth.getSession();
+      const token = sessionData?.data?.session?.access_token;
+      const headers = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
+      const res = await fetch("/api/db/vote", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          setId: setId,
+          voterId: sessionId,
+          direction: direction === "up" ? 1 : -1,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAdSets((prev) =>
+          prev.map((s) => (s.id === setId ? { ...s, votes: data.votes } : s)),
+        );
+      }
+    } catch (err) {
+      console.warn("Set vote sync failed:", err);
+    }
+  };
+
+  const handleSubmitSuggestion = async () => {
+    if (!suggestTargetAd || !suggestionText.trim()) return;
+
+    try {
+      const sessionId = user?.id || getSessionId();
+      const sessionData = await supabase?.auth.getSession();
+      const token = sessionData?.data?.session?.access_token;
+      const headers = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
+      const res = await fetch("/api/db/suggest", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          adId: suggestTargetAd.id,
+          suggestedText: suggestionText,
+          authorId: sessionId,
+        }),
+      });
+
+      if (res.ok) {
+        setToastMessage("Suggestion submitted! Thank you for helping improve PhaseThru.");
+        setIsSuggesting(false);
+        setSuggestionText("");
+        setSuggestTargetAd(null);
+      } else {
+        throw new Error("Failed to submit");
+      }
+    } catch (err) {
+      setToastMessage("Failed to submit suggestion. Please try again.");
+    }
+  };
+
   const formatTime = (totalSeconds) => {
     const s = Math.floor(totalSeconds % 60)
       .toString()
@@ -1300,7 +1408,6 @@ const VideoPlayer = () => {
             )}
           </div>
 
-          {/* PLAYER MODE OVERLAY / SYSTEM STATUS */}
           {appMode === "player" && (
             <div
               style={{
@@ -1323,6 +1430,63 @@ const VideoPlayer = () => {
                 </Typography>
               </div>
             </div>
+          )}
+
+          {/* COMMUNITY BROWSER / AD SETS */}
+          {!isEmbedded && adSets.length > 0 && (
+            <Paper sx={{ p: 2, mb: 2, bgcolor: '#f5f5f5', border: '1px solid #e0e0e0' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                  Community AD Sets ({adSets.length})
+                </Typography>
+                <Button size="small" onClick={() => fetchCommunityAds()}>Refresh</Button>
+              </Box>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                {adSets.map((set) => (
+                  <Paper 
+                    key={set.id} 
+                    variant="outlined" 
+                    sx={{ 
+                      p: 1.5, 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      alignItems: 'center',
+                      borderColor: selectedSetId === set.id ? 'primary.main' : 'divider',
+                      boxShadow: selectedSetId === set.id ? 1 : 0
+                    }}
+                  >
+                    <Box sx={{ flexGrow: 1 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 'bold' }}>{set.name}</Typography>
+                      <Typography variant="caption" color="textSecondary">
+                        By {set.author_id.substring(0, 8)}... • {set.ads?.length || 0} items
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                         <IconButton size="small" onClick={() => handleVoteSet(set.id, 'up')} sx={{ p: 0.5 }}>
+                           <ArrowUpwardIcon fontSize="small" color={set.voted === 1 ? "primary" : "inherit"} />
+                         </IconButton>
+                         <Typography variant="caption" sx={{ fontWeight: 'bold' }}>{set.votes || 0}</Typography>
+                         <IconButton size="small" onClick={() => handleVoteSet(set.id, 'down')} sx={{ p: 0.5 }}>
+                           <ArrowDownwardIcon fontSize="small" color={set.voted === -1 ? "secondary" : "inherit"} />
+                         </IconButton>
+                      </Box>
+                      <Button 
+                        size="small" 
+                        variant={selectedSetId === set.id ? "contained" : "outlined"}
+                        onClick={() => {
+                          setSelectedSetId(set.id);
+                          setAds(set.ads);
+                          setToastMessage(`Loaded set: ${set.name}`);
+                        }}
+                      >
+                        {selectedSetId === set.id ? "Active" : "Load"}
+                      </Button>
+                    </Box>
+                  </Paper>
+                ))}
+              </Box>
+            </Paper>
           )}
 
           {appMode !== "player" && videoMetadata && (
@@ -1399,7 +1563,7 @@ const VideoPlayer = () => {
                     size="small"
                     style={{ flex: 1 }}
                     startIcon={<StorageIcon />}
-                    onClick={handleSaveToDB}
+                    onClick={() => setSaveDialogOpen(true)}
                   >
                     Save to DB
                   </Button>
@@ -1752,6 +1916,10 @@ const VideoPlayer = () => {
           onUpdateAd={handleUpdateAd}
           voices={voices}
           estimateDuration={estimateDuration}
+          onRequestImprovement={(ad) => {
+            setSuggestTargetAd(ad);
+            setIsSuggesting(true);
+          }}
         />
       )}
 
@@ -1802,6 +1970,70 @@ const VideoPlayer = () => {
 
       {/* Login Dialog */}
       <LoginDialog open={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
+
+      {/* Save Set Dialog */}
+      <Dialog open={!!saveDialogOpen} onClose={() => setSaveDialogOpen(false)}>
+        <DialogTitle>Save AD Set to Database</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 2, mt: 1 }}>
+            Give your contribution a name so others can find it.
+          </Typography>
+          <TextField
+            fullWidth
+            label="AD Set Name"
+            placeholder="e.g., Extended Description v1"
+            value={saveSetName}
+            onChange={(e) => setSaveSetName(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSaveDialogOpen(false)}>Cancel</Button>
+          <Button 
+            variant="contained" 
+            onClick={() => {
+              setSaveDialogOpen(false);
+              handleSaveToDB();
+            }}
+            disabled={!saveSetName.trim()}
+          >
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Suggestion Dialog */}
+      <Dialog open={isSuggesting} onClose={() => setIsSuggesting(false).then(() => setSuggestTargetAd(null))}>
+        <DialogTitle>Request Improvement</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 1, mt: 1 }}>
+            Suggest a better description for this timestamp.
+          </Typography>
+          {suggestTargetAd && (
+            <Typography variant="caption" sx={{ display: 'block', mb: 2, p: 1, bgcolor: '#f5f5f5', borderRadius: 1 }}>
+              Original: &quot;{suggestTargetAd.text}&quot;
+            </Typography>
+          )}
+          <TextField
+            fullWidth
+            multiline
+            rows={3}
+            label="Suggested Improvement"
+            value={suggestionText}
+            onChange={(e) => setSuggestionText(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setIsSuggesting(false)}>Cancel</Button>
+          <Button 
+            variant="contained" 
+            color="primary"
+            onClick={handleSubmitSuggestion}
+            disabled={!suggestionText.trim()}
+          >
+            Submit Suggestion
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Embed Code Dialog */}
       <Dialog

@@ -9,6 +9,7 @@ import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import TimerIcon from '@mui/icons-material/Timer';
+import TipsAndUpdatesIcon from '@mui/icons-material/TipsAndUpdates';
 
 const AdTimeline = ({ 
     currentVideoAds, 
@@ -17,10 +18,10 @@ const AdTimeline = ({
     onVote, 
     formatTime, 
     onPlayAd, 
-    onDeleteAd,
     onUpdateAd,
     voices,
-    estimateDuration
+    estimateDuration,
+    onRequestImprovement
 }) => {
     const [editingId, setEditingId] = React.useState(null);
     const [editForm, setEditForm] = React.useState({});
@@ -133,6 +134,17 @@ const AdTimeline = ({
 
                                     {!isEditing && (
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                            {ad.votes < 0 && (
+                                                <Tooltip title="This description has been downvoted. Suggest an improvement?">
+                                                    <IconButton 
+                                                        size="small" 
+                                                        color="warning" 
+                                                        onClick={() => onRequestImprovement(ad)}
+                                                    >
+                                                        <TipsAndUpdatesIcon fontSize="small" />
+                                                    </IconButton>
+                                                </Tooltip>
+                                            )}
                                             {isOverlapping && (
                                                 <Tooltip title={`Warning: Overlaps with next description! (Consumes ${effectiveVideoDuration.toFixed(1)}s of video time)`}>
                                                     <WarningAmberIcon style={{ color: '#ff9800' }} />

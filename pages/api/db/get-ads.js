@@ -16,15 +16,31 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { data, error } = await supabase
+    // 1. Fetch all AD sets for this video
+    const { data: sets, error: setsError } = await supabase
+      .from('ad_sets')
+      .select('*')
+      .eq('video_id', videoId)
+      .order('votes', { ascending: false });
+
+    if (setsError) throw setsError;
+
+    // 2. Fetch all individual ADs for these sets
+    const { data: ads, error: adsError } = await supabase
       .from('audio_descriptions')
       .select('*')
       .eq('video_id', videoId)
       .order('time', { ascending: true });
 
-    if (error) throw error;
+    if (adsError) throw adsError;
 
-    res.status(200).json(data || []);
+    // 3. Group ADs into their sets
+    const setsWithAds = sets.map(set => ({
+      ...set,
+      ads: ads.filter(ad => ad.set_id === set.id)
+    }));
+
+    res.status(200).json(setsWithAds);
   } catch (error) {
     console.error('Get ADs error:', error);
     res.status(500).json({ error: error.message || 'Failed to fetch' });

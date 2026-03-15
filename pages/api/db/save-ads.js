@@ -17,11 +17,13 @@ export default async function handler(req, res) {
     return res.status(503).json({ error: "Database not configured" });
   }
 
-  const { video, ads, authorId } = req.body;
+  const { video, ads, authorId, setName } = req.body;
 
   if (!video?.id || !Array.isArray(ads)) {
     return res.status(400).json({ error: "Missing video or ads data" });
   }
+
+  const finalSetName = setName || "Untitled Set";
 
   if (ads.length > 200) {
     return res
@@ -58,10 +60,26 @@ export default async function handler(req, res) {
 
     if (videoError) throw videoError;
 
-    // Insert audio descriptions
+    // 1. Create the AD Set
+    const { data: setData, error: setError } = await supabase
+      .from("ad_sets")
+      .insert({
+        video_id: video.id,
+        name: finalSetName,
+        author_id: authorId || "anonymous",
+        ...(userId && { user_id: userId }),
+      })
+      .select()
+      .single();
+
+    if (setError) throw setError;
+    const setId = setData.id;
+
+    // 2. Insert audio descriptions linked to this set
     const rows = ads.map((ad) => ({
-      id: ad.id, // Include the ID so upsert works!
+      id: ad.id,
       video_id: video.id,
+      set_id: setId, // LINK TO THE SET
       time: ad.time,
       text: ad.text,
       mode: ad.mode || "pause",
