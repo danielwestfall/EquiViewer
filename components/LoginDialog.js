@@ -69,8 +69,8 @@ const LoginDialog = ({ open, onClose }) => {
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Sign In to EquiViewer</DialogTitle>
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth aria-labelledby="login-dialog-title">
+      <DialogTitle id="login-dialog-title">Sign In to EquiViewer</DialogTitle>
       <DialogContent>
         <Box component="form" onSubmit={handleLogin} sx={{ mt: 2 }}>
           <Typography variant="body1" paragraph>

@@ -13,7 +13,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 const HelpPage = () => {
   return (
-    <Container maxWidth="md" sx={{ mt: 8, mb: 10, flex: 1 }}>
+    <Container maxWidth="md" sx={{ mt: 8, mb: 10, flex: 1 }} id="main-content" component="main">
       <Head>
         <title>Help & Guide - EquiViewer</title>
       </Head>

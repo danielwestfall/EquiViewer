@@ -16,7 +16,7 @@ import TwitterIcon from "@mui/icons-material/Twitter";
 
 const AboutPage = () => {
   return (
-    <Container maxWidth="md" sx={{ mt: 8, mb: 8, flex: 1 }}>
+    <Container maxWidth="md" sx={{ mt: 8, mb: 8, flex: 1 }} id="main-content" component="main">
       <Head>
         <title>About - EquiViewer</title>
       </Head>
@@ -26,7 +26,7 @@ const AboutPage = () => {
       </Typography>
       
       <Box sx={{ mb: 6 }}>
-        <Typography variant="h5" color="text.secondary" gutterBottom>
+        <Typography variant="h5" component="p" color="text.secondary" gutterBottom>
           Bridging the gap in media accessibility and interactive learning.
         </Typography>
         <Typography variant="body1" paragraph mt={2}>
@@ -45,10 +45,10 @@ const AboutPage = () => {
 
       <Card elevation={3} sx={{ mt: 3, borderRadius: 2 }}>
         <CardContent sx={{ p: 4 }}>
-          <Typography variant="h5" gutterBottom fontWeight="bold">
+          <Typography variant="h5" component="h3" gutterBottom fontWeight="bold">
             Daniel Westfall
           </Typography>
-          <Typography variant="subtitle1" color="primary" gutterBottom>
+          <Typography variant="subtitle1" component="p" color="primary" gutterBottom>
             Digital Accessibility Specialist (CPWA)
           </Typography>
           
@@ -65,7 +65,7 @@ const AboutPage = () => {
               startIcon={<LanguageIcon />}
               href="https://codea11y.dev/"
               target="_blank"
-              rel="noopener"
+              rel="noopener noreferrer"
             >
               My Digital Workshop (Blog)
             </Button>
@@ -74,7 +74,7 @@ const AboutPage = () => {
               startIcon={<LinkedInIcon />}
               href="https://www.linkedin.com/in/danielwestfall/"
               target="_blank"
-              rel="noopener"
+              rel="noopener noreferrer"
             >
               LinkedIn
             </Button>
@@ -83,7 +83,7 @@ const AboutPage = () => {
               startIcon={<GitHubIcon />}
               href="https://github.com/danielwestfall"
               target="_blank"
-              rel="noopener"
+              rel="noopener noreferrer"
             >
               GitHub
             </Button>
@@ -92,7 +92,7 @@ const AboutPage = () => {
               startIcon={<TwitterIcon />}
               href="https://twitter.com/Dan_Westfall82"
               target="_blank"
-              rel="noopener"
+              rel="noopener noreferrer"
             >
               Twitter
             </Button>

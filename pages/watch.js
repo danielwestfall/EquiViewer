@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Head from "next/head";
+import Image from "next/image";
 import { useRouter } from "next/router";
 import YouTube from "react-youtube";
 import { supabase } from "../lib/supabase";
@@ -26,8 +27,9 @@ const WatchPlayer = () => {
   useEffect(() => {
     setVideoError("");
     if (router.isReady) {
-      if (router.query.v) {
-        setVideoId(router.query.v);
+      const raw = router.query.v;
+      if (raw && /^[a-zA-Z0-9_-]{11}$/.test(raw)) {
+        setVideoId(raw);
       } else if (!videoId) {
         setVideoId(DEFAULT_VIDEO_ID);
       }
@@ -119,8 +121,9 @@ const WatchPlayer = () => {
       setIsLoading(true);
       try {
         // Fetch Metadata via oEmbed
+        const safeId = encodeURIComponent(videoId);
         const res = await fetch(
-          `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`,
+          `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${safeId}&format=json`,
         );
         if (res.ok) {
           const data = await res.json();
@@ -328,9 +331,11 @@ const WatchPlayer = () => {
       setIsPlaying(true);
     } else {
       setIsPlaying(false);
+      // Only cancel TTS if no AD is actively speaking
       if (
         event.data === YouTube.PlayerState.PAUSED &&
-        activeAdRef.current === null
+        activeAdRef.current === null &&
+        synth.speaking
       ) {
         synth.cancel();
       }
@@ -353,7 +358,7 @@ const WatchPlayer = () => {
   }
 
   return (
-    <div style={{ padding: "20px", maxWidth: "1200px", margin: "0 auto" }}>
+    <div id="main-content" role="main" style={{ padding: "20px", maxWidth: "1200px", margin: "0 auto" }}>
       <Head>
         <title>
           {videoMetadata?.title
@@ -371,10 +376,12 @@ const WatchPlayer = () => {
         }}
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <img
+          <Image
             src="/equiviewer_logo.png"
             alt="EquiViewer Logo"
-            style={{ height: "40px" }}
+            height={40}
+            width={40}
+            style={{ height: "40px", width: "auto" }}
           />
           <Typography variant="h4" sx={{ fontWeight: "bold" }}>
             EquiViewer
@@ -434,9 +441,9 @@ const WatchPlayer = () => {
                     onClick={() => {
                       const query = videoMetadata?.title || videoId;
                       if (query && !query.includes("youtube.com")) {
-                        router.push(`/?search=${encodeURIComponent(query)}`);
+                        router.push(`/video?search=${encodeURIComponent(query)}`);
                       } else {
-                        router.push("/");
+                        router.push("/video");
                       }
                     }}
                   >
@@ -473,6 +480,8 @@ const WatchPlayer = () => {
                 >
                   {activeCaption && (
                     <span
+                      role="status"
+                      aria-live="polite"
                       style={{
                         backgroundColor: "rgba(0,0,0,0.75)",
                         color: "#ff80ab",
@@ -488,6 +497,8 @@ const WatchPlayer = () => {
 
                   {closedCaption && (
                     <span
+                      role="status"
+                      aria-live="polite"
                       style={{
                         backgroundColor: "rgba(0,0,0,0.75)",
                         color: "#fff",
@@ -527,11 +538,12 @@ const WatchPlayer = () => {
                         checked={enableAD}
                         onChange={(e) => setEnableAD(e.target.checked)}
                         color="primary"
+                        inputProps={{ "aria-describedby": "ad-desc" }}
                       />
                     }
                     label={<strong>Audio Descriptions ({ads.length})</strong>}
                   />
-                  <Typography variant="body2" color="textSecondary" ml={4}>
+                  <Typography id="ad-desc" variant="body2" color="textSecondary" ml={4}>
                     TTS narration of visual events.
                   </Typography>
                 </Paper>
@@ -543,6 +555,7 @@ const WatchPlayer = () => {
                         checked={enableTBMA}
                         onChange={(e) => setEnableTBMA(e.target.checked)}
                         color="primary"
+                        inputProps={{ "aria-describedby": "tbma-desc" }}
                       />
                     }
                     label={
@@ -555,7 +568,7 @@ const WatchPlayer = () => {
                       </strong>
                     }
                   />
-                  <Typography variant="body2" color="textSecondary" ml={4}>
+                  <Typography id="tbma-desc" variant="body2" color="textSecondary" ml={4}>
                     Time-based media alternative standard captions and actions.
                   </Typography>
                 </Paper>
@@ -567,13 +580,14 @@ const WatchPlayer = () => {
                         checked={enableDIY}
                         onChange={(e) => setEnableDIY(e.target.checked)}
                         color="primary"
+                        inputProps={{ "aria-describedby": "diy-desc" }}
                       />
                     }
                     label={
                       <strong>DIY Loop Map ({diySteps.length} Steps)</strong>
                     }
                   />
-                  <Typography variant="body2" color="textSecondary" ml={4}>
+                  <Typography id="diy-desc" variant="body2" color="textSecondary" ml={4}>
                     Automatically loops distinct steps of the tutorial.
                   </Typography>
                 </Paper>

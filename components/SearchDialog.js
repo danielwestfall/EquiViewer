@@ -16,8 +16,8 @@ const SearchDialog = ({
     onSelectResult 
 }) => {
     return (
-        <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-            <DialogTitle>Search YouTube for Videos</DialogTitle>
+        <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth aria-labelledby="search-dialog-title">
+            <DialogTitle id="search-dialog-title">Search YouTube for Videos</DialogTitle>
             <DialogContent dividers>
                 <div style={{ display: 'flex', marginBottom: '20px' }}>
                     <TextField
@@ -46,7 +46,7 @@ const SearchDialog = ({
                     {searchResults.map((result) => (
                         <ListItemButton key={result.id} onClick={() => onSelectResult(result)}>
                             <ListItemAvatar>
-                                <Avatar variant="square" src={result.thumbnail} style={{ width: 120, height: 68, marginRight: 15 }} />
+                                <Avatar variant="square" alt={result.title} src={result.thumbnail} style={{ width: 120, height: 68, marginRight: 15 }} />
                             </ListItemAvatar>
                             <ListItemText 
                                 primary={result.title} 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Head from "next/head";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/router";
 import YouTube from "react-youtube";
 import { supabase, getSessionId } from "../lib/supabase";
@@ -48,6 +49,7 @@ const VideoPlayer = () => {
   const router = useRouter();
   const isEmbedded = router.isReady ? router.query.embed === "true" : false;
   const [embedDialogOpen, setEmbedDialogOpen] = useState(false);
+  const [embedMode, setEmbedMode] = useState("player");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -62,7 +64,7 @@ const VideoPlayer = () => {
   // Initialize random cooking video if no specific video is requested
   useEffect(() => {
     if (router.isReady) {
-      if (router.query.videoId) {
+      if (router.query.videoId && /^[a-zA-Z0-9_-]{11}$/.test(router.query.videoId)) {
         setVideoId(router.query.videoId);
       } else if (!videoId) {
         setVideoId(DEFAULT_VIDEO_ID);
@@ -158,12 +160,13 @@ const VideoPlayer = () => {
     tbmaBlocksRef.current = tbmaBlocks;
   }, [tbmaBlocks]);
 
-  // Force player mode if embedded
+  // When embedded, honour the ?mode= query param (defaulting to player)
   useEffect(() => {
-    if (isEmbedded && appMode !== "player") {
-      setAppMode("player");
-    }
-  }, [isEmbedded, appMode]);
+    if (!isEmbedded || !router.isReady) return;
+    const VALID_EMBED_MODES = new Set(["player", "ad_editor", "tbma_editor", "diy_editor"]);
+    const target = VALID_EMBED_MODES.has(router.query.mode) ? router.query.mode : "player";
+    if (appMode !== target) setAppMode(target);
+  }, [isEmbedded, router.isReady, router.query.mode, appMode]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -232,7 +235,7 @@ const VideoPlayer = () => {
             // Try to autorestart if we are still actively in a compatible mode to keep it always listening
             if (
               recognitionRef.current &&
-              (appMode === "player" || appMode === "diy_editor")
+              (appModeRef.current === "player" || appModeRef.current === "diy_editor")
             ) {
               try {
                 recognitionRef.current.start();
@@ -639,8 +642,8 @@ const VideoPlayer = () => {
     const extractedId = extractVideoId(videoInput);
     if (extractedId) {
       setVideoId(extractedId);
-    } else if (videoInput.length === 11) {
-      setVideoId(videoInput); // Assume it's already an ID
+    } else if (/^[a-zA-Z0-9_-]{11}$/.test(videoInput)) {
+      setVideoId(videoInput);
     } else {
       setToastMessage(
         "Invalid YouTube URL or ID. Please paste a valid link or 11-character video ID.",
@@ -821,10 +824,24 @@ const VideoPlayer = () => {
       try {
         const importedAds = JSON.parse(event.target.result);
         if (Array.isArray(importedAds)) {
-          // Validate imported ADs have the minimum required fields
-          const validAds = importedAds.filter(
-            (ad) => ad.time != null && ad.text && ad.mode,
-          );
+          const VALID_MODES = new Set(["pause", "duck", "fluid"]);
+          const validAds = importedAds
+            .slice(0, 500)
+            .filter(
+              (ad) =>
+                typeof ad.time === "number" && isFinite(ad.time) && ad.time >= 0 &&
+                typeof ad.text === "string" && ad.text.length > 0 && ad.text.length <= 2000 &&
+                VALID_MODES.has(ad.mode),
+            )
+            .map((ad) => ({
+              ...ad,
+              id: ad.id || crypto.randomUUID(),
+              videoId: videoId,
+              text: ad.text.trim(),
+              voice: typeof ad.voice === "string" ? ad.voice.slice(0, 100) : "",
+              rate: typeof ad.rate === "number" ? Math.min(Math.max(ad.rate, 0.1), 10) : 1,
+              votes: 0,
+            }));
           if (validAds.length === 0) {
             setToastMessage("No valid audio descriptions found in the file.");
             return;
@@ -839,7 +856,7 @@ const VideoPlayer = () => {
           );
         }
       } catch (err) {
-        setToastMessage("Invalid JSON file uploaded.");
+        setToastMessage("Invalid JSON file.");
       }
     };
     reader.readAsText(file);
@@ -1181,10 +1198,12 @@ const VideoPlayer = () => {
   // Filter ADs strictly for the currently loaded video
   const currentVideoAds = ads.filter((ad) => ad.videoId === videoId);
 
-  const embedCode = `<iframe src="https://equiviewer.vercel.app/video?videoId=${videoId}&embed=true" width="100%" height="600" frameborder="0" allow="autoplay; encrypted-media; clipboard-write; speech" allowfullscreen></iframe>`;
+  const embedCode = `<iframe src="https://equiviewer.vercel.app/video?videoId=${videoId}&embed=true&mode=${embedMode}" width="100%" height="600" frameborder="0" allow="autoplay; encrypted-media; clipboard-write; speech" allowfullscreen></iframe>`;
 
   return (
     <div
+      id="main-content"
+      role="main"
       style={{
         padding: isEmbedded ? "0px" : "20px",
         maxWidth: isEmbedded ? "100%" : "1200px",
@@ -1212,10 +1231,12 @@ const VideoPlayer = () => {
           }}
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <img
+            <Image
               src="/equiviewer_logo.png"
               alt="EquiViewer Logo"
-              style={{ height: "40px" }}
+              height={40}
+              width={40}
+              style={{ height: "40px", width: "auto" }}
             />
             <Typography variant="h4" sx={{ fontWeight: "bold", color: "#212121" }}>
               EquiViewer Editor
@@ -1419,8 +1440,9 @@ const VideoPlayer = () => {
               <div style={{ marginTop: "10px" }}>
                 <Typography
                   variant="caption"
+                  aria-live="polite"
                   style={{
-                    color: isListening ? "#1b5e20" : "#424242", // Darker green and darker gray for contrast
+                    color: isListening ? "#1b5e20" : "#424242",
                     fontWeight: "bold",
                   }}
                 >
@@ -1641,6 +1663,7 @@ const VideoPlayer = () => {
                       step={0.05}
                       onChange={(e, val) => setNewAdVideoRate(val)}
                       valueLabelDisplay="auto"
+                      aria-label="Video Playback Rate during AD"
                     />
                     <Typography variant="caption" style={{ color: "#424242", fontWeight: 500, display: 'block', marginTop: '10px' }}>
                       Video Volume during AD: {newAdVideoVolume}% {newAdVideoVolume === 0 && "(Muted)"}
@@ -1652,6 +1675,7 @@ const VideoPlayer = () => {
                       step={1}
                       onChange={(e, val) => setNewAdVideoVolume(val)}
                       valueLabelDisplay="auto"
+                      aria-label="Video Volume during AD"
                     />
                   </div>
                 )}
@@ -1755,6 +1779,7 @@ const VideoPlayer = () => {
                       setSpeechRate(val);
                       localStorage.setItem("speechRate", val);
                     }}
+                    aria-label="Speech Rate"
                   />
 
                   <Typography variant="caption" style={{ color: "#424242", fontWeight: 500, display: 'block', marginTop: '10px' }}>
@@ -1770,6 +1795,7 @@ const VideoPlayer = () => {
                       setSpeechPitch(val);
                       localStorage.setItem("speechPitch", val);
                     }}
+                    aria-label="Speech Pitch"
                   />
                 </div>
 
@@ -1871,6 +1897,7 @@ const VideoPlayer = () => {
                       setSpeechRate(val);
                       localStorage.setItem("speechRate", val);
                     }}
+                    aria-label="Speech Rate"
                   />
 
                   <Typography variant="caption" style={{ color: "#424242", fontWeight: 500, display: 'block', marginTop: '10px' }}>
@@ -1885,6 +1912,7 @@ const VideoPlayer = () => {
                       setSpeechPitch(val);
                       localStorage.setItem("speechPitch", val);
                     }}
+                    aria-label="Speech Pitch"
                   />
                 </div>
 
@@ -1944,7 +1972,7 @@ const VideoPlayer = () => {
           setHasUnsavedChanges={setHasUnsavedChanges}
           formatTime={formatTime}
           onPlayAd={playAd}
-          videoTitle={videoMetadata?.title || videoTitle}
+          videoTitle={videoMetadata?.title || ""}
         />
       )}
 
@@ -1972,8 +2000,8 @@ const VideoPlayer = () => {
       <LoginDialog open={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
 
       {/* Save Set Dialog */}
-      <Dialog open={!!saveDialogOpen} onClose={() => setSaveDialogOpen(false)}>
-        <DialogTitle>Save AD Set to Database</DialogTitle>
+      <Dialog open={!!saveDialogOpen} onClose={() => setSaveDialogOpen(false)} aria-labelledby="save-set-dialog-title">
+        <DialogTitle id="save-set-dialog-title">Save AD Set to Database</DialogTitle>
         <DialogContent>
           <Typography variant="body2" sx={{ mb: 2, mt: 1 }}>
             Give your contribution a name so others can find it.
@@ -2002,8 +2030,8 @@ const VideoPlayer = () => {
       </Dialog>
 
       {/* Suggestion Dialog */}
-      <Dialog open={isSuggesting} onClose={() => setIsSuggesting(false).then(() => setSuggestTargetAd(null))}>
-        <DialogTitle>Request Improvement</DialogTitle>
+      <Dialog open={isSuggesting} onClose={() => { setIsSuggesting(false); setSuggestTargetAd(null); }} aria-labelledby="suggestion-dialog-title">
+        <DialogTitle id="suggestion-dialog-title">Request Improvement</DialogTitle>
         <DialogContent>
           <Typography variant="body2" sx={{ mb: 1, mt: 1 }}>
             Suggest a better description for this timestamp.
@@ -2039,18 +2067,78 @@ const VideoPlayer = () => {
       <Dialog
         open={embedDialogOpen}
         onClose={() => setEmbedDialogOpen(false)}
-        maxWidth="md"
+        maxWidth="lg"
         fullWidth
+        aria-labelledby="embed-dialog-title"
       >
-        <DialogTitle>Embed EquiViewer Player</DialogTitle>
+        <DialogTitle id="embed-dialog-title">Embed EquiViewer</DialogTitle>
         <DialogContent>
-          <Typography
-            variant="body1"
-            gutterBottom
-            style={{ marginTop: "10px" }}
+          <Typography variant="body1" gutterBottom style={{ marginTop: "10px" }}>
+            Choose which feature mode to embed, preview it live, then copy the code.
+          </Typography>
+
+          {/* Mode selector */}
+          <ToggleButtonGroup
+            value={embedMode}
+            exclusive
+            onChange={(_e, val) => { if (val) setEmbedMode(val); }}
+            aria-label="Embed mode"
+            sx={{ mb: 2, flexWrap: "wrap", gap: 0.5 }}
           >
-            Copy the HTML code below to embed this accessible audio description
-            player on your own website.
+            <ToggleButton value="player" aria-label="Player mode">
+              ▶&nbsp;Player
+            </ToggleButton>
+            <ToggleButton value="ad_editor" aria-label="Audio Description Editor">
+              🎙&nbsp;AD Editor
+            </ToggleButton>
+            <ToggleButton value="tbma_editor" aria-label="TBMA Script Editor">
+              📜&nbsp;TBMA Editor
+            </ToggleButton>
+            <ToggleButton value="diy_editor" aria-label="DIY Loop Map">
+              🛠&nbsp;DIY Editor
+            </ToggleButton>
+          </ToggleButtonGroup>
+
+          {/* Live preview */}
+          {mounted && videoId ? (
+            <Box
+              sx={{
+                mb: 2,
+                border: "1px solid #e0e0e0",
+                borderRadius: 1,
+                overflow: "hidden",
+                backgroundColor: "#000",
+              }}
+            >
+              <iframe
+                key={`${videoId}-${embedMode}`}
+                src={`/video?videoId=${videoId}&embed=true&mode=${embedMode}`}
+                width="100%"
+                height="520"
+                frameBorder="0"
+                allow="autoplay; encrypted-media; clipboard-write; speech"
+                title={`Embed preview — ${embedMode} mode`}
+                style={{ display: "block" }}
+              />
+            </Box>
+          ) : (
+            <Box
+              sx={{
+                mb: 2,
+                p: 3,
+                border: "1px dashed #bbb",
+                borderRadius: 1,
+                textAlign: "center",
+              }}
+            >
+              <Typography variant="body2" color="text.secondary">
+                Load a video first to see a live preview.
+              </Typography>
+            </Box>
+          )}
+
+          <Typography variant="body2" color="text.secondary" gutterBottom>
+            Embed code:
           </Typography>
           <Paper
             variant="outlined"
@@ -2060,7 +2148,6 @@ const VideoPlayer = () => {
               color: "#fff",
               fontFamily: "monospace",
               wordBreak: "break-all",
-              marginTop: "10px",
             }}
           >
             {embedCode}

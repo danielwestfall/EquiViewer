@@ -65,7 +65,24 @@ export default async function handler(req, res) {
     }
 
     // 4. Fetch the caption XML (YouTube serves captions as timedtext XML)
+    //    Validate the URL first to prevent SSRF
     const captionUrl = enTrack.baseUrl.replace(/&amp;/g, "&");
+    let parsedCaptionUrl;
+    try {
+      parsedCaptionUrl = new URL(captionUrl);
+    } catch {
+      throw new Error("Invalid caption URL extracted from YouTube page");
+    }
+    const hostname = parsedCaptionUrl.hostname;
+    const isSafeHost =
+      hostname === "www.youtube.com" ||
+      hostname === "youtube.com" ||
+      hostname.endsWith(".googlevideo.com") ||
+      hostname.endsWith(".googleapis.com");
+    if (!isSafeHost) {
+      throw new Error("Caption URL points to unexpected host");
+    }
+
     const captionRes = await fetch(captionUrl);
     if (!captionRes.ok) {
       throw new Error(`Caption fetch failed with HTTP ${captionRes.status}`);

@@ -1,3 +1,21 @@
+.skip-to-main {
+  position: fixed;
+  top: -100%;
+  left: 0;
+  padding: 8px 16px;
+  background: #fefbff;
+  color: #1c1b1f;
+  font-weight: bold;
+  border: 2px solid #2337ff;
+  border-radius: 0 0 4px 4px;
+  z-index: 9999;
+  text-decoration: none;
+}
+
+.skip-to-main:focus {
+  top: 0;
+}
+
 *,*:before,*:after {
     box-sizing: border-box;
 }

@@ -19,6 +19,14 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import DownloadIcon from "@mui/icons-material/Download";
 import PrintIcon from "@mui/icons-material/Print";
 
+const escapeHtml = (str) =>
+  String(str ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
 const TbmaEditor = ({
   videoId,
   tbmaBlocks,
@@ -204,7 +212,7 @@ const TbmaEditor = ({
     let htmlContent = `
       <html>
         <head>
-          <title>TBMA Script - ${videoTitle}</title>
+          <title>TBMA Script - ${escapeHtml(videoTitle)}</title>
           <style>
             body { font-family: sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 20px; }
             h1 { font-size: 24px; border-bottom: 2px solid #ccc; padding-bottom: 10px; }
@@ -225,26 +233,26 @@ const TbmaEditor = ({
         <body>
           <h1>EquiViewer TBMA Script</h1>
           <div class="meta">
-            <strong>Video Title:</strong> ${videoTitle || "Unknown Video"}<br/>
-            <strong>Video ID:</strong> ${videoId}<br/>
+            <strong>Video Title:</strong> ${escapeHtml(videoTitle) || "Unknown Video"}<br/>
+            <strong>Video ID:</strong> ${escapeHtml(videoId)}<br/>
           </div>
     `;
 
     tbmaBlocks.forEach((block) => {
-      const timeStr = formatTime(block.time);
+      const timeStr = escapeHtml(formatTime(block.time));
       if (block.type === "action") {
         htmlContent += `
           <div class="block action">
             <span class="time">[${timeStr}]</span>
             <span class="action-label">ACTION</span>
-            <span class="text"><strong>[${block.voice}]:</strong> ${block.text}</span>
+            <span class="text"><strong>[${escapeHtml(block.voice)}]:</strong> ${escapeHtml(block.text)}</span>
           </div>`;
       } else {
         htmlContent += `
           <div class="block dialog">
             <span class="time">[${timeStr}]</span>
             <span class="dialog-label">DIALOG</span>
-            <span class="text">"${block.text}"</span>
+            <span class="text">&ldquo;${escapeHtml(block.text)}&rdquo;</span>
           </div>`;
       }
     });
@@ -253,7 +261,7 @@ const TbmaEditor = ({
         </body>
         <script>
           window.onload = function() { window.print(); }
-        </script>
+        <\/script>
       </html>
     `;
 
@@ -322,6 +330,7 @@ const TbmaEditor = ({
             value={manualPaste}
             onChange={(e) => setManualPaste(e.target.value)}
             style={{ marginBottom: "10px" }}
+            inputProps={{ maxLength: 200000, 'aria-label': 'Paste WebVTT caption data' }}
           />
           <Button
             variant="outlined"
@@ -492,6 +501,7 @@ const TbmaEditor = ({
                               value={block.rate || 1}
                               onChange={(e) => updateActionBlock(block.id, "rate", parseFloat(e.target.value))}
                               style={{ width: "100%" }}
+                              aria-label={`Speech rate: ${block.rate || 1}x`}
                             />
                           </div>
 
@@ -507,6 +517,7 @@ const TbmaEditor = ({
                                   value={block.videoRate || 1}
                                   onChange={(e) => updateActionBlock(block.id, "videoRate", parseFloat(e.target.value))}
                                   style={{ width: "100%" }}
+                                  aria-label={`Video rate: ${block.videoRate || 1}x`}
                                 />
                               </div>
                               <div style={{ display: "flex", flexDirection: "column", width: "120px" }}>
@@ -519,6 +530,7 @@ const TbmaEditor = ({
                                   value={block.videoVolume !== undefined ? block.videoVolume : 50}
                                   onChange={(e) => updateActionBlock(block.id, "videoVolume", parseInt(e.target.value))}
                                   style={{ width: "100%" }}
+                                  aria-label={`Video volume: ${block.videoVolume !== undefined ? block.videoVolume : 50}%`}
                                 />
                               </div>
                             </>

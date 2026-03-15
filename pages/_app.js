@@ -56,6 +56,7 @@ function MyApp({ Component, pageProps }) {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
+      <a href="#main-content" className="skip-to-main">Skip to main content</a>
       <Box
         sx={{ display: "flex", flexDirection: "column", minHeight: "100dvh" }}
       >

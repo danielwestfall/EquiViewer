@@ -19,6 +19,7 @@ const AdTimeline = ({
     formatTime, 
     onPlayAd, 
     onUpdateAd,
+    onDeleteAd,
     voices,
     estimateDuration,
     onRequestImprovement
@@ -160,22 +161,22 @@ const AdTimeline = ({
                                     <div style={{ display: 'flex', gap: '5px' }}>
                                         {isEditing ? (
                                             <>
-                                                <IconButton onClick={handleSaveEdit} color="primary" title="Save Changes">
+                                                <IconButton onClick={handleSaveEdit} color="primary" aria-label="Save Changes">
                                                     <SaveIcon />
                                                 </IconButton>
-                                                <IconButton onClick={handleCancelEdit} color="secondary" title="Cancel">
+                                                <IconButton onClick={handleCancelEdit} color="secondary" aria-label="Cancel Edit">
                                                     <CancelIcon />
                                                 </IconButton>
                                             </>
                                         ) : (
-                                            <>
-                                                <IconButton onClick={() => handleStartEdit(ad)} color="primary" title="Edit AD">
+                                            <>  
+                                                <IconButton onClick={() => handleStartEdit(ad)} color="primary" aria-label="Edit description">
                                                     <EditIcon />
                                                 </IconButton>
-                                                <IconButton onClick={() => onPlayAd(ad)} color="primary" title="Preview this AD" aria-label="Preview Description">
+                                                <IconButton onClick={() => onPlayAd(ad)} color="primary" aria-label="Preview Description">
                                                     <PlayArrowIcon />
                                                 </IconButton>
-                                                <IconButton onClick={() => onDeleteAd(ad.id)} color="secondary" title="Delete" aria-label="Delete Description">
+                                                <IconButton onClick={() => onDeleteAd(ad.id)} color="secondary" aria-label="Delete Description">
                                                     <DeleteIcon />
                                                 </IconButton>
                                             </>
@@ -207,6 +208,7 @@ const AdTimeline = ({
                                                 value={editForm.rate}
                                                 onChange={(e) => handleFormChange('rate', parseFloat(e.target.value))}
                                                 style={{ width: '100%' }}
+                                                aria-label={`Speech rate: ${editForm.rate}x`}
                                             />
                                         </div>
                                         <FormControl size="small" style={{ minWidth: '100px' }}>
@@ -234,6 +236,7 @@ const AdTimeline = ({
                                                         value={editForm.videoRate || 1}
                                                         onChange={(e) => handleFormChange('videoRate', parseFloat(e.target.value))}
                                                         style={{ width: '100%' }}
+                                                        aria-label={`Video rate: ${editForm.videoRate || 1}x`}
                                                     />
                                                 </div>
                                                 <div style={{ display: 'flex', flexDirection: 'column', width: '120px' }}>
@@ -246,6 +249,7 @@ const AdTimeline = ({
                                                         value={editForm.videoVolume !== undefined ? editForm.videoVolume : 50}
                                                         onChange={(e) => handleFormChange('videoVolume', parseInt(e.target.value))}
                                                         style={{ width: '100%' }}
+                                                        aria-label={`Video volume: ${editForm.videoVolume !== undefined ? editForm.videoVolume : 50}%`}
                                                     />
                                                 </div>
                                             </>

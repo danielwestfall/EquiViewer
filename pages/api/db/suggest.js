@@ -4,6 +4,12 @@ import { isSupabaseConfigured } from "../../../lib/supabase";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export const config = {
+  api: { bodyParser: { sizeLimit: "10kb" } },
+};
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -15,31 +21,43 @@ export default async function handler(req, res) {
 
   const { adId, suggestedText, authorId } = req.body;
 
-  if (!adId || !suggestedText) {
-    return res.status(400).json({ error: "Missing adId or suggestedText" });
+  if (!adId || !UUID_RE.test(adId)) {
+    return res.status(400).json({ error: "Invalid adId" });
   }
 
-  let userId = null;
+  if (!suggestedText || typeof suggestedText !== "string" || suggestedText.trim().length === 0) {
+    return res.status(400).json({ error: "Missing suggestedText" });
+  }
+
+  if (suggestedText.length > 2000) {
+    return res.status(400).json({ error: "suggestedText too long (max 2000 chars)" });
+  }
+
+  // Require authentication — auth is the spam gate for all writes
   const token = req.headers.authorization?.split(" ")[1];
+  if (!token) {
+    return res.status(401).json({ error: "Authentication required" });
+  }
+
   const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-    global: {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    },
+    global: { headers: { Authorization: `Bearer ${token}` } },
   });
 
-  if (token) {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) userId = user.id;
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    return res.status(401).json({ error: "Invalid or expired session" });
   }
+
+  const safeAuthorId = typeof authorId === "string" ? authorId.slice(0, 100) : "anonymous";
 
   try {
     const { data, error } = await supabase
       .from("ad_suggestions")
       .insert({
         ad_id: adId,
-        suggested_text: suggestedText,
-        author_id: authorId || "anonymous",
-        ...(userId && { user_id: userId }),
+        suggested_text: suggestedText.trim(),
+        author_id: safeAuthorId,
+        user_id: user.id,
       })
       .select()
       .single();
@@ -49,6 +67,6 @@ export default async function handler(req, res) {
     res.status(200).json(data);
   } catch (error) {
     console.error("Suggestion error:", error);
-    res.status(500).json({ error: error.message || "Failed to save suggestion" });
+    res.status(500).json({ error: "Failed to save suggestion" });
   }
 }
