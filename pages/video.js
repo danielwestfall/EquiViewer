@@ -1205,9 +1205,12 @@ const VideoPlayer = () => {
       id="main-content"
       role="main"
       style={{
-        padding: isEmbedded ? "0px" : "20px",
+        padding: isEmbedded ? "0px" : "16px",
+        width: "100%",
         maxWidth: isEmbedded ? "100%" : "1200px",
         margin: "0 auto",
+        boxSizing: "border-box",
+        overflowX: "hidden",
         height: isEmbedded ? "100dvh" : "auto",
         display: isEmbedded ? "flex" : "block",
         flexDirection: isEmbedded ? "column" : "unset",
@@ -1228,6 +1231,8 @@ const VideoPlayer = () => {
             justifyContent: "space-between",
             alignItems: "center",
             mb: 2,
+            flexWrap: "wrap",
+            gap: 1,
           }}
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
@@ -1238,7 +1243,7 @@ const VideoPlayer = () => {
               width={40}
               style={{ height: "40px", width: "auto" }}
             />
-            <Typography variant="h4" sx={{ fontWeight: "bold", color: "#212121" }}>
+            <Typography variant="h5" component="h1" sx={{ fontWeight: "bold", color: "#212121", fontSize: { xs: "1.1rem", sm: "1.5rem" } }}>
               EquiViewer Editor
             </Typography>
           </Box>
@@ -1273,13 +1278,7 @@ const VideoPlayer = () => {
             gap: "15px",
           }}
         >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              marginBottom: "10px",
-            }}
-          >
+          <Box sx={{ display: "flex", justifyContent: "center", mb: 1, width: "100%" }}>
             <ToggleButtonGroup
               color="primary"
               value={appMode}
@@ -1288,18 +1287,26 @@ const VideoPlayer = () => {
                 if (newMode !== null) setAppMode(newMode);
               }}
               aria-label="Application Mode Selection"
+              sx={{ display: "flex", flexWrap: "wrap", justifyContent: "center", width: "100%" }}
             >
-              <ToggleButton value="ad_editor">AD Editor</ToggleButton>
-              <ToggleButton value="diy_editor">DIY Mode Map</ToggleButton>
-              <ToggleButton value="tbma_editor">TBMA Editor</ToggleButton>
-              <ToggleButton value="player">Player</ToggleButton>
+              <ToggleButton value="ad_editor" size="small" sx={{ flex: { xs: 1, sm: "none" } }}>AD Editor</ToggleButton>
+              <ToggleButton value="diy_editor" size="small" sx={{ flex: { xs: 1, sm: "none" } }}>DIY Mode Map</ToggleButton>
+              <ToggleButton value="tbma_editor" size="small" sx={{ flex: { xs: 1, sm: "none" } }}>TBMA Editor</ToggleButton>
+              <ToggleButton value="player" size="small" sx={{ flex: { xs: 1, sm: "none" } }}>Player</ToggleButton>
             </ToggleButtonGroup>
-          </div>
+          </Box>
 
-          <div style={{ display: "flex", alignItems: "center" }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: { xs: "column", sm: "row" },
+              alignItems: { xs: "stretch", sm: "center" },
+              gap: 1,
+            }}
+          >
             <Typography
               variant="h6"
-              style={{ marginRight: "15px", minWidth: "150px", color: "#212121" }}
+              sx={{ color: "#212121", whiteSpace: "nowrap", flexShrink: 0 }}
             >
               Load Video:
             </Typography>
@@ -1310,15 +1317,14 @@ const VideoPlayer = () => {
               fullWidth
               value={videoInput}
               onChange={(e) => setVideoInput(e.target.value)}
-              style={{ marginRight: "15px" }}
               inputProps={{ "aria-label": "Paste YouTube URL or Video ID" }}
             />
-            <div style={{ display: "flex", flexShrink: 0 }}>
+            <Box sx={{ display: "flex", gap: 1, width: { xs: "100%", sm: "auto" } }}>
               <Button
                 variant="contained"
                 color="primary"
                 onClick={handleLoadVideo}
-                style={{ marginRight: "10px", flexShrink: 0 }}
+                sx={{ flex: { xs: 1, sm: "none" } }}
               >
                 Load
               </Button>
@@ -1327,7 +1333,7 @@ const VideoPlayer = () => {
                 color="primary"
                 startIcon={<SearchIcon />}
                 onClick={() => setSearchOpen(true)}
-                style={{ marginRight: "10px", flexShrink: 0 }}
+                sx={{ flex: { xs: 1, sm: "none" } }}
               >
                 Search
               </Button>
@@ -1336,16 +1342,16 @@ const VideoPlayer = () => {
                 color="secondary"
                 startIcon={<CodeIcon />}
                 onClick={() => setEmbedDialogOpen(true)}
-                style={{ flexShrink: 0 }}
+                sx={{ flex: { xs: 1, sm: "none" } }}
               >
                 Embed
               </Button>
-            </div>
-          </div>
+            </Box>
+          </Box>
         </Paper>
       )}
 
-      <Grid container spacing={4}>
+      <Grid container spacing={{ xs: 2, md: 4 }}>
         {/* Video Column */}
         <Grid
           item
@@ -1512,14 +1518,16 @@ const VideoPlayer = () => {
           )}
 
           {appMode !== "player" && videoMetadata && (
-            <div
-              style={{
-                padding: "10px",
-                backgroundColor: "#e0e0e0", // Slightly darker background to separate from white but still light
+            <Box
+              sx={{
+                p: "10px",
+                backgroundColor: "#e0e0e0",
                 borderRadius: "4px",
                 display: "flex",
+                flexDirection: { xs: "column", sm: "row" },
                 justifyContent: "space-between",
-                alignItems: "center",
+                alignItems: { xs: "flex-start", sm: "center" },
+                gap: 1.5,
                 border: "1px solid #bdbdbd",
               }}
             >
@@ -1534,8 +1542,13 @@ const VideoPlayer = () => {
               </div>
 
               {/* Mock DB Interaction & External Importing Tools */}
-              <div
-                style={{ display: "flex", flexDirection: "column", gap: "8px" }}
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "8px",
+                  width: { xs: "100%", sm: "auto" },
+                }}
               >
                 <input
                   type="file"
@@ -1550,6 +1563,7 @@ const VideoPlayer = () => {
                   size="small"
                   startIcon={<CloudUploadIcon />}
                   onClick={() => fileUploadRef.current.click()}
+                  fullWidth
                 >
                   Import Local AD Backup File
                 </Button>
@@ -1559,11 +1573,12 @@ const VideoPlayer = () => {
                   size="small"
                   startIcon={<DownloadIcon />}
                   onClick={handleDownloadBackup}
+                  fullWidth
                 >
                   Download Local AD Backup File
                 </Button>
 
-                <div style={{ display: "flex", gap: "8px" }}>
+                <Box sx={{ display: "flex", gap: "8px" }}>
                   <Button
                     variant="contained"
                     size="small"
@@ -1589,9 +1604,9 @@ const VideoPlayer = () => {
                   >
                     Save to DB
                   </Button>
-                </div>
-              </div>
-            </div>
+                </Box>
+              </Box>
+            </Box>
           )}
         </Grid>
 
@@ -1613,11 +1628,13 @@ const VideoPlayer = () => {
                   </Typography>
                 </div>
 
-                <div
-                  style={{
+                <Box
+                  sx={{
                     display: "flex",
                     alignItems: "center",
-                    marginBottom: "15px",
+                    flexWrap: "wrap",
+                    gap: 1,
+                    mb: 2,
                   }}
                 >
                   <TextField
@@ -1626,7 +1643,7 @@ const VideoPlayer = () => {
                     step="0.1"
                     value={newAdTime}
                     onChange={(e) => setNewAdTime(parseFloat(e.target.value))}
-                    style={{ marginRight: "10px", width: "120px" }}
+                    sx={{ width: "120px" }}
                   />
                   <Button
                     variant="outlined"
@@ -1635,7 +1652,7 @@ const VideoPlayer = () => {
                   >
                     Capture Time
                   </Button>
-                </div>
+                </Box>
 
                 <FormControl fullWidth style={{ marginBottom: "15px" }}>
                   <InputLabel id="action-mode-label">Action Mode</InputLabel>
@@ -1816,13 +1833,7 @@ const VideoPlayer = () => {
                   playback.
                 </Typography>
 
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    marginBottom: "10px",
-                  }}
-                >
+                <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 1, mb: 1.5 }}>
                   <TextField
                     label="Start Time (s)"
                     type="number"
@@ -1831,7 +1842,7 @@ const VideoPlayer = () => {
                     onChange={(e) =>
                       setNewStepStart(parseFloat(e.target.value))
                     }
-                    style={{ marginRight: "10px", flex: 1 }}
+                    sx={{ flex: 1, minWidth: "100px" }}
                   />
                   <Button
                     variant="outlined"
@@ -1840,22 +1851,16 @@ const VideoPlayer = () => {
                   >
                     Current
                   </Button>
-                </div>
+                </Box>
 
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    marginBottom: "15px",
-                  }}
-                >
+                <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 1, mb: 2 }}>
                   <TextField
                     label="End Time (s)"
                     type="number"
                     step="0.1"
                     value={newStepEnd}
                     onChange={(e) => setNewStepEnd(parseFloat(e.target.value))}
-                    style={{ marginRight: "10px", flex: 1 }}
+                    sx={{ flex: 1, minWidth: "100px" }}
                   />
                   <Button
                     variant="outlined"
@@ -1864,7 +1869,7 @@ const VideoPlayer = () => {
                   >
                     Current
                   </Button>
-                </div>
+                </Box>
 
                 <TextField
                   label="Optional Step Description/Context"

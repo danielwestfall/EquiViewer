@@ -50,8 +50,8 @@ const AdTimeline = ({
     };
     return (
         <div>
-            <div style={{ display: 'flex', alignItems: 'center', marginTop: '10px', marginBottom: '15px' }}>
-                <Typography variant="h5" style={{ flexGrow: 1, color: "#212121", fontWeight: 700 }}>
+            <Box sx={{ display: 'flex', alignItems: { xs: 'flex-start', sm: 'center' }, flexWrap: 'wrap', gap: 1, mt: 1, mb: 2 }}>
+                <Typography variant="h5" sx={{ flexGrow: 1, minWidth: 0, color: "#212121", fontWeight: 700 }}>
                      Saved Descriptions ({currentVideoAds.length}) {hasUnsavedChanges && <span style={{ color: '#bf360c', fontSize: '0.6em', verticalAlign: 'middle' }}>(Unsaved Edits)</span>}
                 </Typography>
                 <Button 
@@ -59,10 +59,11 @@ const AdTimeline = ({
                     color="secondary" 
                     startIcon={<PlayArrowIcon />}
                     onClick={onPlayVideoWithAds}
+                    size="small"
                 >
-                    Play Video with ADs
+                    Play with ADs
                 </Button>
-            </div>
+            </Box>
             
             {currentVideoAds.length === 0 ? (
                 <Typography sx={{ color: "#424242", fontStyle: "italic", mt: 2 }}>No descriptions added for this video yet.</Typography>
@@ -80,192 +81,163 @@ const AdTimeline = ({
 
                         return (
                         <Grid item xs={12} key={ad.id}>
-                            <Paper 
-                                style={{ 
-                                    padding: '15px', 
-                                    display: 'flex', 
+                            <Paper
+                                style={{
+                                    padding: '12px',
+                                    display: 'flex',
                                     flexDirection: 'column',
-                                    borderLeft: isOverlapping ? '5px solid #ff9800' : 'none',
-                                    backgroundColor: isOverlapping ? '#fffde7' : '#fff'
+                                    gap: '8px',
+                                    borderLeft: isOverlapping ? '4px solid #ff9800' : '4px solid transparent',
+                                    backgroundColor: isOverlapping ? '#fffde7' : '#fff',
                                 }}
                             >
-                                <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-                                    {/* Upvote / Downvote Section */}
+                                {/* ── ROW 1: timestamp + description text (full width) ── */}
+                                {isEditing ? (
+                                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                                        <TextField
+                                            label="Time (s)"
+                                            type="number"
+                                            size="small"
+                                            value={editForm.time}
+                                            onChange={(e) => handleFormChange('time', parseFloat(e.target.value))}
+                                            sx={{ width: '100px' }}
+                                        />
+                                        <TextField
+                                            label="Description Text"
+                                            multiline
+                                            size="small"
+                                            value={editForm.text}
+                                            onChange={(e) => handleFormChange('text', e.target.value)}
+                                            sx={{ flex: 1, minWidth: '180px' }}
+                                        />
+                                    </Box>
+                                ) : (
+                                    <Box>
+                                        <Typography variant="caption" sx={{ fontWeight: 'bold', color: '#1565c0', display: 'block', mb: 0.5 }}>
+                                            {formatTime(ad.time)}
+                                            {isOverlapping && (
+                                                <Tooltip title={`Warning: Overlaps with next AD (consumes ${effectiveVideoDuration.toFixed(1)}s)`}>
+                                                    <WarningAmberIcon sx={{ fontSize: '0.9rem', color: '#ff9800', ml: 0.5, verticalAlign: 'middle' }} />
+                                                </Tooltip>
+                                            )}
+                                        </Typography>
+                                        <Typography variant="body2" sx={{ color: '#212121', lineHeight: 1.5 }}>
+                                            {ad.text}
+                                        </Typography>
+                                    </Box>
+                                )}
+
+                                {/* ── ROW 2: meta chips + action buttons ── */}
+                                <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 0.5, borderTop: '1px solid #f0f0f0', pt: 1 }}>
+                                    {/* Vote controls */}
                                     {!isEditing && (
-                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginRight: '15px', paddingRight: '15px', borderRight: '1px solid #ccc' }}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, mr: 0.5 }}>
                                             <IconButton size="small" onClick={() => onVote(ad.id, 'up')} color="primary" aria-label="Upvote Description">
-                                                <ThumbUpIcon fontSize="small" />
+                                                <ThumbUpIcon sx={{ fontSize: '1rem' }} />
                                             </IconButton>
-                                            <Typography variant="body2" style={{ fontWeight: 'bold' }}>{ad.votes || 0}</Typography>
+                                            <Typography variant="caption" sx={{ fontWeight: 'bold', minWidth: '16px', textAlign: 'center' }}>{ad.votes || 0}</Typography>
                                             <IconButton size="small" onClick={() => onVote(ad.id, 'down')} color="secondary" aria-label="Downvote Description">
-                                                <ThumbDownIcon fontSize="small" />
+                                                <ThumbDownIcon sx={{ fontSize: '1rem' }} />
                                             </IconButton>
-                                        </div>
+                                        </Box>
                                     )}
-                                    
+
+                                    {/* Duration chip */}
+                                    {!isEditing && (
+                                        <Box sx={{ display: 'flex', alignItems: 'center', color: '#757575', mr: 0.5 }}>
+                                            <TimerIcon sx={{ fontSize: '0.85rem', mr: '2px' }} />
+                                            <Typography variant="caption">{duration.toFixed(1)}s</Typography>
+                                        </Box>
+                                    )}
+
+                                    {/* Mode badge */}
+                                    {!isEditing && (
+                                        <Typography variant="caption" sx={{ bgcolor: '#e0e0e0', px: '6px', py: '2px', borderRadius: '4px', fontWeight: 500 }}>
+                                            {ad.mode?.toUpperCase()}
+                                            {ad.mode === 'fluid' && ` · ${ad.videoRate || 1}x · ${ad.videoVolume ?? 50}%vol`}
+                                        </Typography>
+                                    )}
+
+                                    {/* Voice label */}
+                                    {!isEditing && ad.voice && (
+                                        <Typography variant="caption" sx={{ color: '#616161', fontStyle: 'italic', flexGrow: 1 }}>
+                                            {ad.voice} ({ad.rate}x)
+                                        </Typography>
+                                    )}
+
+                                    {/* Suggest improvement */}
+                                    {!isEditing && ad.votes < 0 && (
+                                        <Tooltip title="Downvoted — suggest an improvement?">
+                                            <IconButton size="small" color="warning" onClick={() => onRequestImprovement(ad)} aria-label="Suggest improvement">
+                                                <TipsAndUpdatesIcon sx={{ fontSize: '1rem' }} />
+                                            </IconButton>
+                                        </Tooltip>
+                                    )}
+
+                                    {/* Spacer */}
+                                    <Box sx={{ flexGrow: 1 }} />
+
+                                    {/* Edit / Save / Cancel / Play / Delete */}
                                     {isEditing ? (
-                                        <div style={{ display: 'flex', flexGrow: 1, gap: '15px', alignItems: 'flex-start' }}>
-                                            <TextField
-                                                label="Time (s)"
-                                                type="number"
-                                                size="small"
-                                                value={editForm.time}
-                                                onChange={(e) => handleFormChange('time', parseFloat(e.target.value))}
-                                                style={{ width: '100px' }}
-                                            />
-                                            <TextField
-                                                label="Description Text"
-                                                multiline
-                                                fullWidth
-                                                size="small"
-                                                value={editForm.text}
-                                                onChange={(e) => handleFormChange('text', e.target.value)}
-                                            />
-                                        </div>
+                                        <>
+                                            <IconButton onClick={handleSaveEdit} color="primary" size="small" aria-label="Save Changes">
+                                                <SaveIcon fontSize="small" />
+                                            </IconButton>
+                                            <IconButton onClick={handleCancelEdit} color="secondary" size="small" aria-label="Cancel Edit">
+                                                <CancelIcon fontSize="small" />
+                                            </IconButton>
+                                        </>
                                     ) : (
                                         <>
-                                            <Typography variant="subtitle1" style={{ minWidth: '80px', fontWeight: 'bold', color: "#212121" }}>
-                                                {formatTime(ad.time)}
-                                            </Typography>
-                                            <Typography style={{ marginLeft: '15px', flexGrow: 1, color: "#424242" }}>
-                                                {ad.text}
-                                            </Typography>
+                                            <IconButton onClick={() => handleStartEdit(ad)} color="primary" size="small" aria-label="Edit description">
+                                                <EditIcon fontSize="small" />
+                                            </IconButton>
+                                            <IconButton onClick={() => onPlayAd(ad)} color="primary" size="small" aria-label="Preview Description">
+                                                <PlayArrowIcon fontSize="small" />
+                                            </IconButton>
+                                            <IconButton onClick={() => onDeleteAd(ad.id)} color="secondary" size="small" aria-label="Delete Description">
+                                                <DeleteIcon fontSize="small" />
+                                            </IconButton>
                                         </>
                                     )}
+                                </Box>
 
-                                    {!isEditing && (
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                            {ad.votes < 0 && (
-                                                <Tooltip title="This description has been downvoted. Suggest an improvement?">
-                                                    <IconButton 
-                                                        size="small" 
-                                                        color="warning" 
-                                                        onClick={() => onRequestImprovement(ad)}
-                                                    >
-                                                        <TipsAndUpdatesIcon fontSize="small" />
-                                                    </IconButton>
-                                                </Tooltip>
-                                            )}
-                                            {isOverlapping && (
-                                                <Tooltip title={`Warning: Overlaps with next description! (Consumes ${effectiveVideoDuration.toFixed(1)}s of video time)`}>
-                                                    <WarningAmberIcon style={{ color: '#ff9800' }} />
-                                                </Tooltip>
-                                            )}
-                                            <Box style={{ display: 'flex', alignItems: 'center', color: '#757575', marginRight: '10px' }}>
-                                                <TimerIcon fontSize="small" style={{ marginRight: '4px' }} />
-                                                <Typography variant="caption">{duration.toFixed(1)}s</Typography>
-                                            </Box>
-                                        </div>
-                                    )}
-
-                                    <div style={{ display: 'flex', gap: '5px' }}>
-                                        {isEditing ? (
-                                            <>
-                                                <IconButton onClick={handleSaveEdit} color="primary" aria-label="Save Changes">
-                                                    <SaveIcon />
-                                                </IconButton>
-                                                <IconButton onClick={handleCancelEdit} color="secondary" aria-label="Cancel Edit">
-                                                    <CancelIcon />
-                                                </IconButton>
-                                            </>
-                                        ) : (
-                                            <>  
-                                                <IconButton onClick={() => handleStartEdit(ad)} color="primary" aria-label="Edit description">
-                                                    <EditIcon />
-                                                </IconButton>
-                                                <IconButton onClick={() => onPlayAd(ad)} color="primary" aria-label="Preview Description">
-                                                    <PlayArrowIcon />
-                                                </IconButton>
-                                                <IconButton onClick={() => onDeleteAd(ad.id)} color="secondary" aria-label="Delete Description">
-                                                    <DeleteIcon />
-                                                </IconButton>
-                                            </>
-                                        )}
-                                    </div>
-                                </div>
-
+                                {/* ── ROW 3: edit-mode voice/rate/mode controls ── */}
                                 {isEditing && (
-                                    <div style={{ display: 'flex', gap: '15px', marginTop: '15px', paddingLeft: '0', alignItems: 'center' }}>
-                                        <FormControl size="small" style={{ minWidth: '150px' }}>
+                                    <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center', pt: 1, borderTop: '1px solid #f0f0f0' }}>
+                                        <FormControl size="small" sx={{ minWidth: '150px', flex: 1 }}>
                                             <InputLabel>Voice</InputLabel>
-                                            <Select
-                                                value={editForm.voice}
-                                                label="Voice"
-                                                onChange={(e) => handleFormChange('voice', e.target.value)}
-                                            >
+                                            <Select value={editForm.voice} label="Voice" onChange={(e) => handleFormChange('voice', e.target.value)}>
                                                 {voices.map((v, i) => (
                                                     <MenuItem key={i} value={v.name}>{v.name}</MenuItem>
                                                 ))}
                                             </Select>
                                         </FormControl>
-                                        <div style={{ display: 'flex', flexDirection: 'column', width: '120px' }}>
+                                        <Box sx={{ display: 'flex', flexDirection: 'column', minWidth: '100px', flex: 1 }}>
                                             <Typography variant="caption">Rate: {editForm.rate}x</Typography>
-                                            <input 
-                                                type="range" 
-                                                min={0.5} 
-                                                max={4} 
-                                                step={0.1}
-                                                value={editForm.rate}
-                                                onChange={(e) => handleFormChange('rate', parseFloat(e.target.value))}
-                                                style={{ width: '100%' }}
-                                                aria-label={`Speech rate: ${editForm.rate}x`}
-                                            />
-                                        </div>
-                                        <FormControl size="small" style={{ minWidth: '100px' }}>
+                                            <input type="range" min={0.5} max={4} step={0.1} value={editForm.rate} onChange={(e) => handleFormChange('rate', parseFloat(e.target.value))} style={{ width: '100%' }} aria-label={`Speech rate: ${editForm.rate}x`} />
+                                        </Box>
+                                        <FormControl size="small" sx={{ minWidth: '100px' }}>
                                             <InputLabel>Mode</InputLabel>
-                                            <Select
-                                                value={editForm.mode}
-                                                label="Mode"
-                                                onChange={(e) => handleFormChange('mode', e.target.value)}
-                                            >
+                                            <Select value={editForm.mode} label="Mode" onChange={(e) => handleFormChange('mode', e.target.value)}>
                                                 <MenuItem value="pause">Pause</MenuItem>
                                                 <MenuItem value="duck">Duck</MenuItem>
                                                 <MenuItem value="fluid">Fluid</MenuItem>
                                             </Select>
                                         </FormControl>
-
                                         {editForm.mode === 'fluid' && (
                                             <>
-                                                <div style={{ display: 'flex', flexDirection: 'column', width: '120px' }}>
+                                                <Box sx={{ display: 'flex', flexDirection: 'column', minWidth: '100px', flex: 1 }}>
                                                     <Typography variant="caption">Video Rate: {editForm.videoRate || 1}x</Typography>
-                                                    <input 
-                                                        type="range" 
-                                                        min={0.25} 
-                                                        max={2} 
-                                                        step={0.05}
-                                                        value={editForm.videoRate || 1}
-                                                        onChange={(e) => handleFormChange('videoRate', parseFloat(e.target.value))}
-                                                        style={{ width: '100%' }}
-                                                        aria-label={`Video rate: ${editForm.videoRate || 1}x`}
-                                                    />
-                                                </div>
-                                                <div style={{ display: 'flex', flexDirection: 'column', width: '120px' }}>
-                                                    <Typography variant="caption">Vid Vol: {editForm.videoVolume !== undefined ? editForm.videoVolume : 50}%</Typography>
-                                                    <input 
-                                                        type="range" 
-                                                        min={0} 
-                                                        max={100} 
-                                                        step={1}
-                                                        value={editForm.videoVolume !== undefined ? editForm.videoVolume : 50}
-                                                        onChange={(e) => handleFormChange('videoVolume', parseInt(e.target.value))}
-                                                        style={{ width: '100%' }}
-                                                        aria-label={`Video volume: ${editForm.videoVolume !== undefined ? editForm.videoVolume : 50}%`}
-                                                    />
-                                                </div>
+                                                    <input type="range" min={0.25} max={2} step={0.05} value={editForm.videoRate || 1} onChange={(e) => handleFormChange('videoRate', parseFloat(e.target.value))} style={{ width: '100%' }} aria-label={`Video rate: ${editForm.videoRate || 1}x`} />
+                                                </Box>
+                                                <Box sx={{ display: 'flex', flexDirection: 'column', minWidth: '100px', flex: 1 }}>
+                                                    <Typography variant="caption">Vol: {editForm.videoVolume ?? 50}%</Typography>
+                                                    <input type="range" min={0} max={100} step={1} value={editForm.videoVolume ?? 50} onChange={(e) => handleFormChange('videoVolume', parseInt(e.target.value))} style={{ width: '100%' }} aria-label={`Video volume: ${editForm.videoVolume ?? 50}%`} />
+                                                </Box>
                                             </>
                                         )}
-                                    </div>
-                                )}
-
-                                {!isEditing && ad.voice && (
-                                    <div style={{ display: 'flex', gap: '10px', marginTop: '5px', paddingLeft: '95px' }}>
-                                        <Typography variant="caption" style={{ color: '#424242', fontStyle: 'italic', fontWeight: 500 }}>
-                                            {ad.voice} ({ad.rate}x)
-                                        </Typography>
-                                        <Typography variant="caption" style={{ backgroundColor: '#e0e0e0', padding: '2px 6px', borderRadius: '4px' }}>
-                                            {ad.mode.toUpperCase()} {ad.mode === 'fluid' && `(${ad.videoRate || 1}x Speed, ${ad.videoVolume !== undefined ? ad.videoVolume : 50}% Vol)`}
-                                        </Typography>
-                                    </div>
+                                    </Box>
                                 )}
                             </Paper>
                         </Grid>
